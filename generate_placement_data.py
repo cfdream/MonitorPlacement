@@ -44,7 +44,7 @@ class GeneratePlacementData:
                 self.num_nodes = node1_id
             if node2_id > self.num_nodes:
                 self.num_nodes = node2_id
-        print self.graph
+        #print self.graph
         return self.num_nodes
 
     def get_distance_between_nodes(self):
@@ -203,6 +203,7 @@ class GeneratePlacementData:
 
             out_file.write('{0} {1} {2}\n' .format(i, condition_idx, measure_idx))
         out_file.close()
+        print 'generate_mapped_tasks: {0} pairs of tasks generated\n' .format(num_mapped_paris)
 
 if __name__ == "__main__":        
     if len(sys.argv) != 6:
@@ -232,3 +233,4 @@ if __name__ == "__main__":
     generator.generate_tasks_and_candidate_nodes(placement_fname, num_condition_tasks, num_measure_tasks)
     #mapped tasks
     generator.generate_mapped_tasks(placement_fname, num_condition_tasks, num_measure_tasks, condition_mapped_ratio)
+    print 'generate_placement_data for {0} condition monitors, {1} measure monitors succeeded\n' .format(num_condition_tasks, num_measure_tasks)
