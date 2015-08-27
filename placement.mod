@@ -38,8 +38,8 @@ maximize placement:
 	alpha *
 	#average latency among all pairs of monitors
 	sum {k in 1..num_match} sum {i in 1..n} sum {j in 1..n} g[matched_tasks[k,1],i]*g[matched_tasks[k,2],j]*distance[i,j]
-	/
-	max(1, sum {kk in 1..num_match} sum {ii in 1..n} sum {jj in 1..n} g[matched_tasks[kk,1],ii]*g[matched_tasks[kk,2],jj]);
+	/ 2;
+	#max(1, sum {kk in 1..num_match} sum {ii in 1..n} sum {jj in 1..n} g[matched_tasks[kk,1],ii]*g[matched_tasks[kk,2],jj]);
 
 #####Declaration of Constrains
 #1. task_i must can be assigned to node_j

@@ -1,0 +1,90 @@
+#####Declaration of parameters
+param alpha = 0.1;
+#number of nodes
+param n := 5;
+#n*n matrix, distance between nodes
+param distance :
+ 1 2 3 4 5:=
+1 0 1 1 1 1
+2 1 0 2 2 2
+3 1 2 0 2 2
+4 1 2 2 0 2
+5 1 2 2 2 0
+;
+#maximum number of tasks each node can run
+param max_node_tasks :=
+1 2 
+2 2 
+3 2 
+4 2 
+5 2 
+;
+#number of tasks
+param m = 40;
+#can task i be assigned to task j
+param can_assign :
+  1 2 3 4 5
+1 0 1 1 1 0
+2 0 1 1 1 0
+3 0 0 1 1 1
+4 0 1 1 0 1
+5 1 1 1 0 0
+6 1 1 0 0 1
+7 1 1 0 0 1
+8 1 1 0 0 1
+9 1 1 1 0 0
+10 0 0 1 1 1
+11 1 1 0 1 0
+12 1 1 1 0 0
+13 0 1 1 1 0
+14 1 0 1 0 1
+15 1 1 0 1 0
+16 0 1 1 1 0
+17 1 0 1 1 0
+18 1 0 1 1 0
+19 0 0 1 1 1
+20 0 1 0 1 1
+21 1 0 1 0 1
+22 1 0 1 0 1
+23 0 1 1 1 0
+24 0 0 1 1 1
+25 0 0 1 1 1
+26 0 1 0 1 1
+27 1 0 1 1 0
+28 0 0 1 1 1
+29 1 0 0 1 1
+30 0 1 1 1 0
+31 0 1 1 0 1
+32 0 1 1 1 0
+33 1 0 0 1 1
+34 0 1 1 1 0
+35 1 1 0 0 1
+36 1 1 1 0 0
+37 1 1 0 1 0
+38 1 1 1 0 0
+39 1 0 1 1 0
+40 1 0 0 1 1
+#number of matched tasks
+param num_match = 20;
+#num_match * 2 matrix, matched tasks
+  1 2
+1 5 22
+2 16 38
+3 12 27
+4 5 24
+5 13 26
+6 9 36
+7 13 40
+8 12 39
+9 19 35
+10 20 35
+11 4 32
+12 18 37
+13 16 35
+14 9 24
+15 19 27
+16 5 23
+17 1 37
+18 19 36
+19 17 34
+20 9 37
