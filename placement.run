@@ -1,8 +1,8 @@
 reset;
-model placement.mod;
-data placement.dat;
+model placement_max_assigned_pairs.mod;
+data sample.dat;
 option solver cplex;
 #option solver baron;
 solve;
 display g;
-display placement;
+display max_assigned_pairs;

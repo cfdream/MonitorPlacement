@@ -22,7 +22,7 @@ var g{1..m, 1..n} integer >=0 <=1;
 
 #####Declaration of objective function
 #objective1: maximize the number of pairs of assigned monitors
-maximize assigned_pairs: sum {k in 1..num_match} sum {i in 1..n} sum {j in 1..n} g[matched_tasks[k,1],i]*g[matched_tasks[k,2],j];
+maximize max_assigned_pairs: sum {k in 1..num_match} sum {i in 1..n} sum {j in 1..n} g[matched_tasks[k,1],i]*g[matched_tasks[k,2],j];
 
 #####Declaration of Constrains
 #1. task_i must can be assigned to node_j

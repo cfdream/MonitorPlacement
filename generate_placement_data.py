@@ -105,7 +105,7 @@ class GeneratePlacementData:
         #param alpha = 0.1;
         out_file=open(out_fname, 'a')
         out_file.write('#####Declaration of parameters\n')
-        out_file.write('param alpha = {0};\n' .format(GeneratePlacementData.ALPHA))
+        out_file.write('#param alpha = {0};\n' .format(GeneratePlacementData.ALPHA))
         out_file.close()
 
     def output_maxnum_tasks_per_node(self, out_fname):
@@ -167,6 +167,7 @@ class GeneratePlacementData:
             for j in range(1, self.num_nodes+1):
                 out_str += " {0}" .format(can_assign[i][j])
             out_file.write(out_str+'\n')
+        out_file.write(';')
         out_file.close()
        
     def generate_mapped_tasks(self, out_fname, num_condition_tasks, num_measure_tasks, condition_mapped_ratio):
