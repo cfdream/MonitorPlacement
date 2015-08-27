@@ -1,0 +1,8 @@
+reset;
+model placement.mod;
+data placement.dat;
+#option solver cplex;
+option solver baron;
+solve;
+display g;
+display placement;
