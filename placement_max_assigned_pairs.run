@@ -1,13 +1,19 @@
 reset;
 option log_file 'temp';
 model placement_max_assigned_pairs.mod;
-data sample.dat;
+data input.dat;
 option solver cplex;
 solve;
 #display g;
-display 1,n,m, num_match/m, sum {k in 1..num_match} sum {i in 1..n} sum {j in 1..n} 
+display 2,n,m, num_match/m, sum {k in 1..num_match} sum {i in 1..n} sum {j in 1..n} 
 		(g[matched_tasks[k,1],i]*g[matched_tasks[k,2],j])
   - sum {k in 1..num_match} sum {i in 1..n} sum {j in 1..n} 
   		(distance[i,j]*g[matched_tasks[k,1],i]*g[matched_tasks[k,2],j])
   	 / (n*num_match)
+  >> placement_max_assigned_pairs.output;
+display sum {k in 1..num_match} sum {i in 1..n} sum {j in 1..n} 
+		(g[matched_tasks[k,1],i]*g[matched_tasks[k,2],j])
+  >> placement_max_assigned_pairs.output;
+display sum {k in 1..num_match} sum {i in 1..n} sum {j in 1..n} 
+  		(distance[i,j]*g[matched_tasks[k,1],i]*g[matched_tasks[k,2],j])
   >> placement_max_assigned_pairs.output;

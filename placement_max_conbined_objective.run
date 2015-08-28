@@ -6,8 +6,10 @@ data input.dat;
 option solver cplex;
 solve;
 #display g;
-display 2,n,m, num_match/m, max_combined_objective >> placement_max_conbined_objective.output;
-#display sum {k in 1..num_match} sum {i in 1..n} sum {j in 1..n} 
-#		(g[matched_tasks[k,1],i]*g[matched_tasks[k,2],j]);
-#display sum {k in 1..num_match} sum {i in 1..n} sum {j in 1..n} 
-#  		(distance[i,j]*g[matched_tasks[k,1],i]*g[matched_tasks[k,2],j]);	
+display 3,n,m, num_match/m, max_combined_objective >> placement_max_conbined_objective.output;
+display sum {k in 1..num_match} sum {i in 1..n} sum {j in 1..n} 
+		(g[matched_tasks[k,1],i]*g[matched_tasks[k,2],j])
+  >> placement_max_conbined_objective.output;
+display sum {k in 1..num_match} sum {i in 1..n} sum {j in 1..n} 
+  		(distance[i,j]*g[matched_tasks[k,1],i]*g[matched_tasks[k,2],j])
+  >> placement_max_conbined_objective.output;
