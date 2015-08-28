@@ -22,7 +22,9 @@ var g{1..m, 1..n} integer >=0 <=1;
 
 #####Declaration of objective function
 #objective: minimize average_latency
-minimize min_total_latency: sum {k in 1..num_match} sum {i in 1..n} sum {j in 1..n} g[matched_tasks[k,1],i]*g[matched_tasks[k,2],j]*distance[i,j];
+minimize min_total_latency: 
+	sum {k in 1..num_match} sum {i in 1..n} sum {j in 1..n} 
+    	g[matched_tasks[k,1],i]*g[matched_tasks[k,2],j]*distance[i,j];
 
 #####Declaration of Constrains
 #1. task_i must can be assigned to node_j
@@ -32,8 +34,6 @@ subject to task_limit {i in 1..m}: sum {j in 1..n} g[i,j] <= 1;
 #3. node_j can only run ast most max_node_tasks[j] tasks
 subject to node_limit {j in 1..n}: sum {i in 1..m} g[i,j] <= max_node_tasks[j];
 #4. there should be max_assigned_pairs pairs of tasks assigned
-subject to assigned_pairs: sum {k in 1..num_match} sum {i in 1..n} sum {j in 1..n} 
-	g[matched_tasks[k,1],i]*g[matched_tasks[k,2],j] 
-	==9;
-	
-	
+#subject to assigned_pairs: sum {k in 1..num_match} sum {i in 1..n} sum {j in 1..n} 
+#	g[matched_tasks[k,1],i]*g[matched_tasks[k,2],j] 
+#	>=9;

@@ -21,9 +21,15 @@ param matched_tasks {1..num_match, 1..2};
 var g{1..m, 1..n} integer >=0 <=1;
 
 #####Declaration of objective function
-#objective1: maximize the number of pairs of assigned monitors
-maximize max_assigned_pairs: sum {k in 1..num_match} sum {i in 1..n} sum {j in 1..n} 
-	g[matched_tasks[k,1],i]*g[matched_tasks[k,2],j];
+#objective: maximize the number of pairs of assigned monitors
+maximize max_combined_objective: 
+	sum {k in 1..num_match} sum {i in 1..n} sum {j in 1..n} 
+		(g[matched_tasks[k,1],i]*g[matched_tasks[k,2],j])
+  - sum {k in 1..num_match} sum {i in 1..n} sum {j in 1..n} 
+  		(distance[i,j]*g[matched_tasks[k,1],i]*g[matched_tasks[k,2],j])
+  	 / (n*num_match);
+#	- sum {k in 1..num_match} sum {i in 1..n} sum {j in 1..n} 
+#  		(g[matched_tasks[k,1],i]*g[matched_tasks[k,2],j]*distance[i,j]);
 
 #####Declaration of Constrains
 #1. task_i must can be assigned to node_j

@@ -1,0 +1,9 @@
+1 = 1
+n = 5
+m = 4
+num_match/m = 0.5
+sum{k in 1 .. num_match} sum{i in 1 .. n} sum{j in 1 .. n} g[matched_tasks[k,1
+  ],i]*g[matched_tasks[k,2],j] - sum{k in 1 .. num_match} sum{i in 1 .. n} sum
+  {j in 1 .. n} distance[i,j]*g[matched_tasks[k,1],i]*g[matched_tasks[k,2],j]/
+  (n*num_match) = 2
+
