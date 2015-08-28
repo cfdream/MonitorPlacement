@@ -6,3 +6,12 @@ option solver cplex;
 solve;
 display g;
 display max_assigned_pairs;
+
+reset;
+model placement_min_latency.mod;
+data sample.dat;
+option solver gurobi;
+solve;
+display g;
+display min_total_latency;
+

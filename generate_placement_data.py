@@ -160,14 +160,14 @@ class GeneratePlacementData:
         out_str = " "
         for i in range(1, self.num_nodes+1):
             out_str += " {0}" .format(i)
-        out_file.write(out_str+'\n')
+        out_file.write(out_str+':=\n')
         #body
         for i in range(1, num_condition_tasks+num_measure_tasks+1):
             out_str = "{0}" .format(i)
             for j in range(1, self.num_nodes+1):
                 out_str += " {0}" .format(can_assign[i][j])
             out_file.write(out_str+'\n')
-        out_file.write(';')
+        out_file.write(';\n')
         out_file.close()
        
     def generate_mapped_tasks(self, out_fname, num_condition_tasks, num_measure_tasks, condition_mapped_ratio):
@@ -189,7 +189,8 @@ class GeneratePlacementData:
         out_file.write('param num_match = {0};\n' .format(num_mapped_paris))
         
         out_file.write('#num_match * 2 matrix, matched tasks\n')
-        out_file.write('  1 2\n')
+        out_file.write('param matched_tasks :\n')
+        out_file.write('  1 2:=\n')
         mapped_pair_map = {}
         for i in range(1, num_mapped_paris+1):
             condition_idx = random.randint(1, num_condition_tasks)
