@@ -51,7 +51,7 @@ class GetNumTasksVsObjective():
             if match != None:
                 latency = int(match.group(1))
                 last_instance_got = 1
-                print(num_tasks, obj_value, num_pairs, latency)
+                #print(num_tasks, obj_value, num_pairs, latency)
 
             #add into map
             if last_instance_got == 1:
