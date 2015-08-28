@@ -7,9 +7,8 @@ import random
 
 class GeneratePlacementData:
     ALPHA = 0.1
-    MAX_TASKS_PER_NODE = 2
-    CANDIDATE_NODES_FOR_ONE_TASK = 3
-    NUM_MAPPED_TASKS = 2
+    MAX_TASKS_PER_NODE = 1
+    CANDIDATE_NODES_FOR_ONE_TASK = 1
 
     def __init__(self):
         self.num_nodes = 0

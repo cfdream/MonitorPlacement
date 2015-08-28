@@ -1,6 +1,6 @@
 reset;
 option log_file 'temp';
-model placement_max_conbined_objective.mod;
+model placement_csamp.mod;
 data input.dat;
 #data input.AS3356.dat;
 option solver cplex;

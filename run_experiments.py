@@ -14,9 +14,9 @@ if __name__ == '__main__':
     #experiment 1
     #1) X axis: #task, Y axis: objective value. Given mapping ratio.
     mapped_condition_monitor_ratio = 1
-    #for task_ratio in [0.5, 1, 2, 4, 8]:
-    for task_ratio in [0.5]:
-        for ith_round in range(1):
+    for task_ratio in [0.5, 1, 2, 4, 8]:
+    #for task_ratio in [0.5]:
+        for ith_round in range(30):
             num_condition_tasks = int(num_nodes * task_ratio)
             num_measure_tasks = num_condition_tasks
             
@@ -32,6 +32,11 @@ if __name__ == '__main__':
 
             #run csamp
             ampl_str = 'ampl placement_csamp.run'
+            ret,output = commands.getstatusoutput(ampl_str)
+            print 'ret:{0}, {1}' .format(ret, output)
+
+            #run placement_max_assigned_pairs.run
+            ampl_str = 'ampl placement_max_assigned_pairs.run'
             ret,output = commands.getstatusoutput(ampl_str)
             print 'ret:{0}, {1}' .format(ret, output)
 

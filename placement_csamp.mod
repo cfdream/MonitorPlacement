@@ -23,7 +23,7 @@ var g{1..m, 1..n} integer >=0 <=1;
 #####Declaration of objective function
 #objective: maximize the number of pairs of assigned monitors
 maximize max_csamp: 
-	sum {i in 1..n} sum {j in 1..n} g[i,j]
+	sum {i in 1..m} sum {j in 1..n} g[i,j];
 	
 #####Declaration of Constrains
 #1. task_i must can be assigned to node_j
