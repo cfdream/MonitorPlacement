@@ -1,0 +1,23 @@
+[1] "Microsoft Exchange Server 2010 Architecture". 
+http://www.microsoft.com/en-us/download/details.aspx?id=5764
+
+	High-level architecture:
+	(1)
+	Internet Client
+	Firewall
+	Edge Transport Server
+	Firewall
+	Hub Transport Server
+	Mailbox Server
+	Client Access Server
+	(Associated with ``Domain Controller'')
+
+	(2)
+	PBX
+	VoIP Gateway
+	Unified Messaging Server
+	Client Access Server
+	(Associated with ``Domain Controller'')
+
+
+

@@ -1,0 +1,50 @@
+2 = 2
+n = 5
+m = 20
+num_match/m = 0.5
+sum{k in 1 .. num_match} sum{i in 1 .. n} sum{j in 1 .. n} g[matched_tasks[k,1
+  ],i]*g[matched_tasks[k,2],j] - sum{k in 1 .. num_match} sum{i in 1 .. n} sum
+  {j in 1 .. n} distance[i,j]*g[matched_tasks[k,1],i]*g[matched_tasks[k,2],j]/
+  (n*num_match) = 1.94
+
+sum{k in 1 .. num_match} sum{i in 1 .. n} sum{j in 1 .. n} g[matched_tasks[k,1
+  ],i]*g[matched_tasks[k,2],j] = 2
+
+sum{k in 1 .. num_match} sum{i in 1 .. n} sum{j in 1 .. n} distance[i,j]*g[
+  matched_tasks[k,1],i]*g[matched_tasks[k,2],j] = 3
+
+2 = 2
+n = 5
+m = 36
+num_match/m = 0.5
+2 = 2
+n = 5
+m = 36
+num_match/m = 0.5
+2 = 2
+n = 5
+m = 36
+num_match/m = 0.5
+sum{k in 1 .. num_match} sum{i in 1 .. n} sum{j in 1 .. n} g[matched_tasks[k,1
+  ],i]*g[matched_tasks[k,2],j] - sum{k in 1 .. num_match} sum{i in 1 .. n} sum
+  {j in 1 .. n} latency[i,j]*max_node_flows[i]*g[matched_tasks[k,1],i]*g[
+  matched_tasks[k,2],j]/(n*num_match) = 5
+
+sum{k in 1 .. num_match} sum{i in 1 .. n} sum{j in 1 .. n} g[matched_tasks[k,1
+  ],i]*g[matched_tasks[k,2],j] = 5
+
+2 = 2
+n = 5
+m = 36
+num_match/m = 0.5
+sum{k in 1 .. num_match} sum{i in 1 .. n} sum{j in 1 .. n} g[matched_tasks[k,1
+  ],i]*g[matched_tasks[k,2],j] - sum{k in 1 .. num_match} sum{i in 1 .. n} sum
+  {j in 1 .. n} latency[i,j]*max_node_flows[i]*g[matched_tasks[k,1],i]*g[
+  matched_tasks[k,2],j]/(n*num_match) = 5
+
+sum{k in 1 .. num_match} sum{i in 1 .. n} sum{j in 1 .. n} g[matched_tasks[k,1
+  ],i]*g[matched_tasks[k,2],j] = 5
+
+sum{k in 1 .. num_match} sum{i in 1 .. n} sum{j in 1 .. n} latency[i,j]*g[
+  matched_tasks[k,1],i]*g[matched_tasks[k,2],j]*max_node_flows[i] = 0
+
