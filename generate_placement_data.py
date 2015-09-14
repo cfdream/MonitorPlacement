@@ -12,8 +12,8 @@ class GeneratePlacementData:
     
     MAX_FLOWS_PER_NODE = 1
     
-    NUM_CM_TASK_RAND_MIN = 1
-    NUM_CM_TASK_RAND_MAX = 10
+    NUM_CM_TASK_RAND_MIN = -5
+    NUM_CM_TASK_RAND_MAX = 1
 
     ALPHA = 0.1
     CANDIDATE_NODES_FOR_ONE_TASK = 1
@@ -56,11 +56,11 @@ class GeneratePlacementData:
         #print self.graph
         return self.num_nodes
 
-    def init_graph_other_param(self):
+    def init_graph_other_param(self, times_num_flow):
         self.graph_flow_num = 1.0 * \
             self.num_nodes / GeneratePlacementData.INTERNET2_SWITCH_NUM \
             * GeneratePlacementData.INTERNET2_FLOW_NUM 
-        GeneratePlacementData.MAX_FLOWS_PER_NODE = int ( 1.0 * self.graph_flow_num / self.num_nodes / self.num_nodes * 10);
+        GeneratePlacementData.MAX_FLOWS_PER_NODE = int ( 1.0 * self.graph_flow_num / self.num_nodes / self.num_nodes * times_num_flow);
 
     def get_latency_between_nodes(self):
         self.latency_graph.append([])
@@ -177,7 +177,7 @@ class GeneratePlacementData:
             assert(len(temp) == 2)
             path = temp[0][:-1]
             ratio = float(temp[1])
-            print("path:{0}, ratio:{1}" .format(path, ratio))
+            #print("path:{0}, ratio:{1}" .format(path, ratio))
             #1. get the nodes in the path
             path_nodes_str = path.split(' ')
             path_nodes = []
@@ -188,7 +188,7 @@ class GeneratePlacementData:
             path_flow_num = int(self.graph_flow_num * ratio)
             #3. get the number of CM tasks per path
             num_path_cm_tasks = random.randint(GeneratePlacementData.NUM_CM_TASK_RAND_MIN, GeneratePlacementData.NUM_CM_TASK_RAND_MAX)
-            for i in range(num_path_cm_tasks):
+            for i in range(0, num_path_cm_tasks):
                 task1_id = num_tasks + 1
                 task2_id = num_tasks + 2
                 num_tasks += 2
@@ -200,13 +200,7 @@ class GeneratePlacementData:
                 task_monitor_flow_num.append(path_flow_num)
 
         out_file=open(out_fname, 'a')
-        #2 output task_monitor_flow_num
-        out_str='param task_monitor_flow_num :=\n'
-        for i in range(1, num_tasks+1):
-            out_str += '{0} {1} \n' .format(i, task_monitor_flow_num[i])
-        out_file.write(out_str + ";\n")
-
-        #3. output CM tasks
+        #2. output CM tasks
         #####output can_assign matrix
         #header
         out_file.write('#number of tasks\n')
@@ -231,6 +225,12 @@ class GeneratePlacementData:
         out_file.write(';\n')
         print 'generate_tasks-num_tasks:{0}, and can_assign matrix' .format(num_tasks)
         
+        #3 output task_monitor_flow_num
+        out_str='param task_monitor_flow_num :=\n'
+        for i in range(1, num_tasks+1):
+            out_str += '{0} {1} \n' .format(i, task_monitor_flow_num[i])
+        out_file.write(out_str + ";\n")
+
         #4. mapped tasks
         num_mapped_paris = num_tasks/2
         out_file.write('#number of matched tasks\n')
@@ -332,16 +332,14 @@ class GeneratePlacementData:
         print 'generate_mapped_tasks: {0} pairs of tasks generated\n' .format(num_mapped_paris)
 
 if __name__ == "__main__":        
-    if len(sys.argv) != 7:
-        print "usage: python generate_placement_data.py placement.dat topo_weight_file gravity_file num_condition_tasks num_measure_tasks condition_mapped_ratio\n"
+    if len(sys.argv) != 5:
+        print "usage: python generate_placement_data.py placement.dat topo_weight_file gravity_file times_num_flow[1,2,4,8,16]\n"
         exit(0)
     placement_fname = sys.argv[1]
     topo_fname = sys.argv[2]
     gravity_file = sys.argv[3]
-    num_condition_tasks = int(sys.argv[4])
-    num_measure_tasks = int(sys.argv[5])
-    condition_mapped_ratio = float(sys.argv[6])
-    
+    times_num_flow = int(sys.argv[4])
+
     #remove existing output file
     commands.getstatusoutput('rm {0}' .format(placement_fname))
 
@@ -352,7 +350,7 @@ if __name__ == "__main__":
     generator.output_alpha(placement_fname)
     #latency matrix
     generator.read_graph_topo(topo_fname)
-    generator.init_graph_other_param()
+    generator.init_graph_other_param(times_num_flow)
     generator.get_latency_between_nodes()
     generator.output_latency_to_file(placement_fname)
     #maximum flow per node
@@ -366,4 +364,5 @@ if __name__ == "__main__":
     #old#mapped tasks
     #generator.generate_mapped_tasks(placement_fname, num_condition_tasks, num_measure_tasks, condition_mapped_ratio)
 
-    print 'generate_placement_data for {0} condition monitors, {1} measure monitors succeeded\n' .format(num_condition_tasks, num_measure_tasks)
+    #print 'generate_placement_data for {0} condition monitors, {1} measure monitors succeeded\n' .format(num_condition_tasks, num_measure_tasks)
+    print 'generate_placement_data succeeded\n'

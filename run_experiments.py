@@ -4,36 +4,33 @@ import string
 import re
 
 if __name__ == '__main__':
-    if len(sys.argv) != 3:
-        print 'usage: python run_experiments.py topo_fname num_nodes_in_topo\n'
+    if len(sys.argv) != 4:
+        print 'usage: python run_experiments.py topo_weight_fname topo_gravity_fname num_nodes_in_topo\n'
         exit(0)
-    topo_fname = sys.argv[1]
-    num_nodes = int(sys.argv[2])
+    topo_weight_fname = sys.argv[1]
+    topo_gravity_fname = sys.argv[2]
+    num_nodes = int(sys.argv[3])
     input_fname = 'input.dat'
     
     #experiment 1
     #1) X axis: #task, Y axis: objective value. Given mapping ratio.
     mapped_condition_monitor_ratio = 1
-    for task_ratio in [0.5, 1, 2, 4, 8]:
-    #for task_ratio in [0.5]:
+    for flow_times_each_node in [1, 2, 4, 8, 16]:
         for ith_round in range(30):
-            num_condition_tasks = int(num_nodes * task_ratio)
-            num_measure_tasks = num_condition_tasks
-            
             #generate data file
-            generate_str = 'python generate_placement_data.py {topo_fname} {input_fname} {num_condition_tasks} {num_measure_tasks} {mapped_ratio}' .format(topo_fname=topo_fname, input_fname=input_fname, num_condition_tasks=num_condition_tasks, num_measure_tasks=num_measure_tasks, mapped_ratio=mapped_condition_monitor_ratio)
+            generate_str = 'python generate_placement_data.py {input_fname} {topo_weight_fname} {topo_gravity_fname} {flow_times_each_node}' .format(input_fname=input_fname, topo_weight_fname=topo_weight_fname, topo_gravity_fname=topo_gravity_fname, flow_times_each_node=flow_times_each_node)
             ret,output = commands.getstatusoutput(generate_str)
             print 'ret:{0}, {1}' .format(ret, output)
 
             #run our approach
-            ampl_str = 'ampl placement_max_conbined_objective.run'
-            ret,output = commands.getstatusoutput(ampl_str)
-            print 'ret:{0}, {1}' .format(ret, output)
+            #ampl_str = 'ampl placement_max_conbined_objective.run'
+            #ret,output = commands.getstatusoutput(ampl_str)
+            #print 'ret:{0}, {1}' .format(ret, output)
 
             #run csamp
-            ampl_str = 'ampl placement_csamp.run'
-            ret,output = commands.getstatusoutput(ampl_str)
-            print 'ret:{0}, {1}' .format(ret, output)
+            #ampl_str = 'ampl placement_csamp.run'
+            #ret,output = commands.getstatusoutput(ampl_str)
+            #print 'ret:{0}, {1}' .format(ret, output)
 
             #run placement_max_assigned_pairs.run
             ampl_str = 'ampl placement_max_assigned_pairs.run'
