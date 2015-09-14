@@ -4,12 +4,11 @@ import string
 import re
 
 if __name__ == '__main__':
-    if len(sys.argv) != 4:
-        print 'usage: python run_experiments.py topo_weight_fname topo_gravity_fname num_nodes_in_topo\n'
+    if len(sys.argv) != 3:
+        print 'usage: python run_experiments.py topo_weight_fname topo_gravity_fname\n'
         exit(0)
     topo_weight_fname = sys.argv[1]
     topo_gravity_fname = sys.argv[2]
-    num_nodes = int(sys.argv[3])
     input_fname = 'input.dat'
     
     #experiment 1
