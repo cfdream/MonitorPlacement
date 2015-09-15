@@ -20,7 +20,8 @@ param matched_tasks {1..num_match, 1..2};
 
 #####Declaration of variables
 #whether task i assigned to node j
-var g{1..m, 1..n} integer >=0 <=1;
+var g{1..m, 1..n} binary;
+#var g{1..m, 1..n}  integer >=0 <=1;
 
 #####Declaration of objective function
 #objective1: maximize the number of pairs of assigned monitors
@@ -32,5 +33,5 @@ maximize max_assigned_pairs: sum {k in 1..num_match} sum {i in 1..n} sum {j in 1
 subject to must_can_assign {i in 1..m, j in 1..n} : g[i,j] <= can_assign[i,j];
 #2. task_i can only be assigned to one node
 subject to task_limit {i in 1..m}: sum {j in 1..n} g[i,j] <= 1;
-#3. node_j can only run ast most max_node_tasks[j] tasks
-subject to node_limit {j in 1..n}: sum {i in 1..m} g[i,j]*task_monitor_flow_num[i] <= max_node_flows[j];
+#3. node_j can only monitor at most max_node_flows[j] flows
+subject to node_limit {j in 1..n}: sum {i in 1..m} g[i,j] * task_monitor_flow_num[i] <= max_node_flows[j];

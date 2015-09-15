@@ -4,7 +4,8 @@ model placement_max_assigned_pairs.mod;
 data input.dat;
 option solver cplex;
 solve;
-#display g;
+display g
+  >> placement_max_assigned_pairs.output;
 #number of nodes in the topology, number of candidate tasks
 display 2,n,m 
   >> placement_max_assigned_pairs.output;
