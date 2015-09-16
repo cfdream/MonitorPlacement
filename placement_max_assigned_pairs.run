@@ -27,13 +27,27 @@ display sum {k in 1..num_match} sum {i in 1..n} sum {j in 1..n}
 		(g[matched_tasks[k,1],i]*g[matched_tasks[k,2],j])
   >> placement_max_assigned_pairs.output;
 
+#number of flows monitored
+display sum {k in 1..num_match} sum {i in 1..n} sum {j in 1..n} 
+		(
+        g[matched_tasks[k,1],i]*g[matched_tasks[k,2],j] *
+  		min(task_monitor_flow_num[matched_tasks[k,1]], task_monitor_flow_num[matched_tasks[k,2]])
+        )
+  >> placement_max_assigned_pairs.output;
+
 #latency of all monitored flows
 #1. latency between nodes should be the real latency, rather than #hop
 #2. latency should consider the number of flows monitored by each pair of tasks.
-display sum {k in 1..num_match} sum {i in 1..n} sum {j in 1..n} 
+display (sum {k in 1..num_match} sum {i in 1..n} sum {j in 1..n} 
   		(
         g[matched_tasks[k,1],i] * g[matched_tasks[k,2],j] * 
   		latency[i,j] * 
   		min(task_monitor_flow_num[matched_tasks[k,1]], task_monitor_flow_num[matched_tasks[k,2]])
-        )
+        )) / 
+        (sum {k in 1..num_match} sum {i in 1..n} sum {j in 1..n} 
+        (g[matched_tasks[k,1],i]*g[matched_tasks[k,2],j]*
+  		min(task_monitor_flow_num[matched_tasks[k,1]], task_monitor_flow_num[matched_tasks[k,2]])
+        ))
   >> placement_max_assigned_pairs.output;
+
+

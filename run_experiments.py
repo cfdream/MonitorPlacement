@@ -41,5 +41,11 @@ if __name__ == '__main__':
             end_ms = 1000*time.time()
             print "placement_max_assigned_pairs time:{0}ms" .format(end_ms-start_ms)
 
+            #run greedy algorithm
+            greedy_str = 'python greedy_algorithm.py input.dat >> greedy_algorithm.output'
+            ret,output = commands.getstatusoutput(greedy_str)
+            print "greedy_algorithm finished"
+
+
     #experiment 2
     

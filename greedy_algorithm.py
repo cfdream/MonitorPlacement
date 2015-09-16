@@ -253,6 +253,7 @@ class GreedyAlgorithm:
     def getAlgorithmResult(self):
         num_assigned_pair = 0
         latency = 0
+        monitored_flow_num = 0
         for matchid in range(1, self.num_match+1):
             map_taskid1 = self.match_tasks[matchid][1]
             map_taskid2 = self.match_tasks[matchid][2]
@@ -264,7 +265,8 @@ class GreedyAlgorithm:
                 taskid2_monitor_flow = self.task_monitor_flow_num[taskid2_node]
                 num_assigned_pair += 1
                 latency += self.latency[taskid1_node][taskid2_node] * min(taskid1_monitor_flow, taskid2_monitor_flow)
-        return (num_assigned_pair, latency)
+                monitored_flow_num += min(taskid1_monitor_flow, taskid2_monitor_flow)
+        return (self.num_nodes, self.num_tasks, self.max_node_flows[1], num_assigned_pair, latency, monitored_flow_num, latency/monitored_flow_num)
 
 if __name__ == '__main__':
     if len(sys.argv) !=2:
@@ -276,5 +278,3 @@ if __name__ == '__main__':
     greedyAlgorithm.initialOtherParam()
     greedyAlgorithm.greedyAlgorithm()
     print greedyAlgorithm.getAlgorithmResult()
-    print greedyAlgorithm.max_node_flows
-    print greedyAlgorithm.node_used_flows
