@@ -250,7 +250,7 @@ class GeneratePlacementData:
                     if ii == len(path_nodes):
                         now_path_flow_num = path_flow_num
                         break
-                print i, j, now_path_flow_num
+                #print i, j, now_path_flow_num
                 if now_path_flow_num == 0:
                     continue
 

@@ -19,7 +19,7 @@ if __name__ == '__main__':
     for flow_times_each_node in [1, 2, 4, 8, 16]:
         for ith_round in range(10):
             #generate data file
-            generate_str = 'python generate_placement_data.py {input_fname} {topo_weight_fname} {topo_gravity_fname} {flow_times_each_node}' .format(input_fname=input_fname, topo_weight_fname=topo_weight_fname, topo_gravity_fname=topo_gravity_fname, flow_times_each_node=flow_times_each_node)
+            generate_str = 'python new_generate_placement_data.py {input_fname} {topo_weight_fname} {topo_weight_json_fname} {topo_gravity_fname} {flow_times_each_node}' .format(input_fname=input_fname, topo_weight_fname=topo_weight_fname, topo_weight_json_fname=topo_weight_json_fname, topo_gravity_fname=topo_gravity_fname, flow_times_each_node=flow_times_each_node)
             ret,output = commands.getstatusoutput(generate_str)
             print 'ret:{0}, {1}' .format(ret, output)
 

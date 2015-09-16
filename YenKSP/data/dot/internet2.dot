@@ -1,0 +1,74 @@
+digraph network { 
+	rankdir=TB;
+	node [shape=circle, style=filled]
+	edge [minlen=2]
+	
+	/* Nodes */
+	"11" [color=""]
+	"10" [color=""]
+	"1" [color=""]
+	"3" [color=""]
+	"2" [color=""]
+	"5" [color=""]
+	"4" [color=""]
+	"7" [color=""]
+	"6" [color=""]
+	"9" [color=""]
+	"8" [color=""]
+	
+	
+	/* Edges */
+	"11" -> "10" [label="233"]
+	"11" -> "7" [label="700"]
+	"10" -> "9" [label="846"]
+	"10" -> "11" [label="233"]
+	"1" -> "2" [label="861"]
+	"1" -> "4" [label="2095"]
+	"3" -> "2" [label="366"]
+	"3" -> "5" [label="1893"]
+	"2" -> "1" [label="861"]
+	"2" -> "3" [label="366"]
+	"2" -> "4" [label="1295"]
+	"5" -> "9" [label="1176"]
+	"5" -> "3" [label="1893"]
+	"5" -> "6" [label="902"]
+	"4" -> "1" [label="2095"]
+	"4" -> "2" [label="1295"]
+	"4" -> "6" [label="639"]
+	"7" -> "11" [label="700"]
+	"7" -> "8" [label="260"]
+	"6" -> "8" [label="548"]
+	"6" -> "5" [label="902"]
+	"6" -> "4" [label="639"]
+	"9" -> "8" [label="587"]
+	"9" -> "5" [label="1176"]
+	"9" -> "10" [label="846"]
+	"8" -> "9" [label="587"]
+	"8" -> "7" [label="260"]
+	"8" -> "6" [label="548"]
+	
+	
+	/* Nodes that have the same rank. */
+	{ rank=same; "C" "D" "F" }
+	{ rank=same; "E" "G" "H" }
+	
+	
+	"C" [rank="source"]
+	"H" [rank="sink"]
+	// Source Node
+	// Sink Node
+	
+	/* Legend */
+	subgraph legend {
+		rankdir=TB;
+		rank="same";
+		
+		"legend1" [shape=none, fillcolor="white", fontname="monospace", fontcolor="white", label=<
+			<TABLE BORDER="0">
+				<TR><TD>                    </TD></TR>
+				<TR><TD>                    </TD></TR>
+				<TR><TD>                    </TD></TR>
+				<TR><TD>                    </TD></TR>
+			</TABLE>>]
+	}
+}
