@@ -1,18 +1,17 @@
 reset;
-option log_file 'temp';
-model placement_max_assigned_pairs.mod;
+model placement_max_assigned_pairs_with_latency_constrain.mod;
 data input.dat;
 option solver cplex;
 solve;
 display g
-  >> placement_max_assigned_pairs.output;
+  >> placement_max_assigned_pairs_with_latency_constrain.output;
 #number of nodes in the topology, number of candidate tasks
 display 2,n,m 
-  >> placement_max_assigned_pairs.output;
+  >> placement_max_assigned_pairs_with_latency_constrain.output;
 
 #number of flows each node can monitor(assumption: each node can monitor the same amount of flows)
 display max_node_flows[1]
-  >> placement_max_assigned_pairs.output;
+  >> placement_max_assigned_pairs_with_latency_constrain.output;
 
 #combined object
 #display 2,n,m, num_match/m, sum {k in 1..num_match} sum {i in 1..n} sum {j in 1..n} 
@@ -20,12 +19,12 @@ display max_node_flows[1]
 #  - sum {k in 1..num_match} sum {i in 1..n} sum {j in 1..n} 
 #  		(latency[i,j]*max_node_flows[i]*g[matched_tasks[k,1],i]*g[matched_tasks[k,2],j])
 #  	 / (n*num_match)
-#  >> placement_max_assigned_pairs.output;
+#  >> placement_max_assigned_pairs_with_latency_constrain.output;
 
 #number of assigned pairs of tasks
 display sum {k in 1..num_match} sum {i in 1..n} sum {j in 1..n} 
 		(g[matched_tasks[k,1],i]*g[matched_tasks[k,2],j])
-  >> placement_max_assigned_pairs.output;
+  >> placement_max_assigned_pairs_with_latency_constrain.output;
 
 #number of flows monitored
 display sum {k in 1..num_match} sum {i in 1..n} sum {j in 1..n} 
@@ -33,7 +32,7 @@ display sum {k in 1..num_match} sum {i in 1..n} sum {j in 1..n}
         g[matched_tasks[k,1],i]*g[matched_tasks[k,2],j] *
   		min(task_monitor_flow_num[matched_tasks[k,1]], task_monitor_flow_num[matched_tasks[k,2]])
         )
-  >> placement_max_assigned_pairs.output;
+  >> placement_max_assigned_pairs_with_latency_constrain.output;
 
 #latency of all monitored flows
 #1. latency between nodes should be the real latency, rather than #hop
@@ -48,8 +47,12 @@ display (sum {k in 1..num_match} sum {i in 1..n} sum {j in 1..n}
         (g[matched_tasks[k,1],i]*g[matched_tasks[k,2],j]*
   		min(task_monitor_flow_num[matched_tasks[k,1]], task_monitor_flow_num[matched_tasks[k,2]])
         ))
-  >> placement_max_assigned_pairs.output;
+  >> placement_max_assigned_pairs_with_latency_constrain.output;
 
 
 display num_match
-  >> placement_max_assigned_pairs.output;
+  >> placement_max_assigned_pairs_with_latency_constrain.output;
+
+display pair_max_latency
+  >> placement_max_assigned_pairs_with_latency_constrain.output;
+

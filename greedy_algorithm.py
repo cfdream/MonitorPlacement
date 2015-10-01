@@ -177,6 +177,7 @@ class GreedyAlgorithm:
                     max_valid_mapped_tasks = num_valid_mapped_tasks
                     taskid_with_max_valid_mapped_tasks = taskid
 
+            #print max_valid_mapped_tasks, taskid_with_max_valid_mapped_tasks
             #if taskid_with_max_valid_mapped_tasks==0, means no mapped tasks can be assigned already, break
             if not taskid_with_max_valid_mapped_tasks:
                 break
@@ -266,7 +267,16 @@ class GreedyAlgorithm:
                 num_assigned_pair += 1
                 latency += self.latency[taskid1_node][taskid2_node] * min(taskid1_monitor_flow, taskid2_monitor_flow)
                 monitored_flow_num += min(taskid1_monitor_flow, taskid2_monitor_flow)
-        return (self.num_nodes, self.num_tasks, self.max_node_flows[1], num_assigned_pair, latency, monitored_flow_num, latency/monitored_flow_num)
+                #print "taskid1:", map_taskid1, "node", taskid1_node, "taskid2:", map_taskid2, "node", taskid2_node, "latency", self.latency[taskid1_node][taskid2_node]
+
+        #--print monitoring flow number of assigned tasks--
+        #assigned_task_monitor_flowNum_list = []
+        #for task_id in range(1, self.num_tasks+1):
+        #    if self.task_assigned_node[task_id]:
+        #        assigned_task_monitor_flowNum_list.append(self.task_monitor_flow_num[task_id])
+        #for flow_num in sorted(assigned_task_monitor_flowNum_list):
+        #    print flow_num
+        return (self.num_nodes, self.num_tasks, self.num_match, self.max_node_flows[1], num_assigned_pair, latency, monitored_flow_num, latency/monitored_flow_num)
 
 if __name__ == '__main__':
     if len(sys.argv) !=2:

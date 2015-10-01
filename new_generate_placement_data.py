@@ -57,7 +57,7 @@ class GeneratePlacementData:
                 self.num_nodes = node1_id
             if node2_id > self.num_nodes:
                 self.num_nodes = node2_id
-        print self.graph
+        #print self.graph
         with open('topo.json', 'w') as fp:
             json.dump(self.graph, fp)
         return self.num_nodes
@@ -161,6 +161,15 @@ class GeneratePlacementData:
         for i in range(1, self.num_nodes+1):
             out_str += '{0} {1} \n' .format(i, GeneratePlacementData.MAX_FLOWS_PER_NODE)
         out_file.write(out_str + ';\n')
+        out_file.close()
+
+    def output_pair_latency_limit(self, out_fname, pair_latency_limit):
+        ##upper limit of latency between one pair of tasks
+        #param pair_max_latency;
+        out_file=open(out_fname, 'a')
+        out_file.write('#upper limit of latency between one pair of tasks\n')
+        out_str='param pair_max_latency:= {0};\n' .format(pair_latency_limit)
+        out_file.write(out_str)
         out_file.close()
 
     def read_path_gravity_file(self, gravity_file, path_gravity_info):
@@ -356,15 +365,16 @@ class GeneratePlacementData:
         out_file.close()
         print 'generate_mapped_tasks: {0} pairs of tasks generated\n' .format(num_mapped_paris)
 
-if __name__ == "__main__":        
-    if len(sys.argv) != 6:
-        print "usage: python generate_placement_data.py output.dat topo_weight_file topo_weight_json_file gravity_file times_num_flow[1,2,4,8,16]\n"
+if __name__ == "__main__":
+    if len(sys.argv) != 7:
+        print "usage: python new_generate_placement_data.py placement.dat topo_weight_file topo_weight_json_file gravity_file times_num_flow[1,2,4,8,16] pair_latency_limit\n"
         exit(0)
     placement_fname = sys.argv[1]
     topo_fname = sys.argv[2]
     topo_json_fname = sys.argv[3]
     gravity_file = sys.argv[4]
     times_num_flow = int(sys.argv[5])
+    pair_latency_limit = int(sys.argv[6])
 
     #remove existing output file
     commands.getstatusoutput('rm {0}' .format(placement_fname))
@@ -381,6 +391,8 @@ if __name__ == "__main__":
     generator.output_latency_to_file(placement_fname)
     #maximum flow per node
     generator.output_maximum_flows_per_node(placement_fname)
+    #pair_latency_limit
+    generator.output_pair_latency_limit(placement_fname, pair_latency_limit)
    
     #generate mapped tasks from gravity model data
     path_gravity_info = []
@@ -392,4 +404,4 @@ if __name__ == "__main__":
     generator.generate_ecmp_paths_mapped_tasks(topo_json_fname, path_gravity_info, task_monitor_flow_num, can_assign, task_maps)
     generator.output_mapped_tasks(placement_fname, task_monitor_flow_num, can_assign, task_maps)
 
-    print 'generate_placement_data succeeded\n'
+    print 'new_generate_placement_data succeeded\n'
