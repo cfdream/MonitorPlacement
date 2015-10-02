@@ -18,6 +18,9 @@ param num_match;
 #num_match * 2 matrix, matched tasks
 param matched_tasks {1..num_match, 1..2};
 
+#latency constrain
+param pair_max_latency;
+
 #####Declaration of variables
 #whether task i assigned to node j
 var g{1..m, 1..n} binary;
