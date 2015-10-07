@@ -143,13 +143,27 @@ class GeneratePlacementData:
             out_file.write(out_str + "\n")
         out_file.write(";\n");
         out_file.close()
-    
+
     def output_alpha(self, out_fname):
         #####Declaration of parameters
         #param alpha = 0.1;
         out_file=open(out_fname, 'a')
         out_file.write('#####Declaration of parameters\n')
         out_file.write('#param alpha = {0};\n' .format(GeneratePlacementData.ALPHA))
+        out_file.close()
+
+    #a very small positive real number, used for linearization.
+    def output_epsilon(self, out_fname):
+        out_file=open(out_fname, 'a')
+        out_file.write('#####Declaration of parameters\n')
+        out_file.write('param epsilon = 0.0001;\n')
+        out_file.close()
+
+    #a very large positive number, used for linearization
+    def output_M(self, out_fname):
+        out_file=open(out_fname, 'a')
+        out_file.write('#####Declaration of parameters\n')
+        out_file.write('param M = 999999999;\n')
         out_file.close()
 
     def output_maximum_flows_per_node(self, out_fname):
@@ -214,7 +228,8 @@ class GeneratePlacementData:
                 #task1_id monitors all flows along the path
                 can_assign.append(path_nodes)
                 task_monitor_flow_num.append(path_flow_num)
-                #task2_id
+                #task2_id can be assigned to any nodes along the path
+                #task2_id monitors all flows along the path
                 can_assign.append(path_nodes)
                 task_monitor_flow_num.append(path_flow_num)
                 #add a map of tasks
@@ -271,7 +286,6 @@ class GeneratePlacementData:
                 for path in paths:
                     now_set = Set(path['path'])
                     intersect_set = intersect_set.intersection(now_set)
-
                     sum_cost += 1.0 / path['cost']
                 ctask_candidate_nodes = list(intersect_set)
                 #print 'ctask candidate nodes:', ctask_candidate_nodes
@@ -362,7 +376,29 @@ class GeneratePlacementData:
         out_file.write('  1 2:=\n')
         for i in range(num_mapped_paris):
             out_file.write('{0} {1} {2}\n' .format(i+1, task_maps[i][0], task_maps[i][1]))
+        out_file.write(';\n')
+
+        #5. mapped tasks in another format
+        candidate_tasks_match = [[0 for x in range(num_tasks + 1)] for x in range(num_tasks+1)]
+        for i in range(num_mapped_paris):
+            first_taskid = task_maps[i][0]
+            second_taskid = task_maps[i][1]
+            candidate_tasks_match[first_taskid][second_taskid] = 1
+            candidate_tasks_match[second_taskid][first_taskid] = 1
+        out_file.write('#candidate mapping information of tasks\n')
+        out_file.write('param candidate_tasks_match :\n')
+        out_str = " "
+        for i in range(1, num_tasks+1):
+            out_str += " {0}" .format(i)
+        out_file.write(out_str+':=\n')
+        for i in range(1, num_tasks+1):
+            out_str = "{0}" .format(i)
+            for j in range(1, num_tasks+1):
+                out_str += " {0}" .format(candidate_tasks_match[i][j])
+            out_file.write(out_str+'\n')
+        out_file.write(';\n')
         out_file.close()
+
         print 'generate_mapped_tasks: {0} pairs of tasks generated\n' .format(num_mapped_paris)
 
 if __name__ == "__main__":
@@ -384,16 +420,20 @@ if __name__ == "__main__":
     generator = GeneratePlacementData()
     #alpha
     generator.output_alpha(placement_fname)
-    #latency matrix
+    #-------node and topology information-------#
+    #read topology and initialize
     generator.read_graph_topo(topo_fname)
     generator.init_graph_other_param(times_num_flow)
+    #latency matrix
     generator.get_latency_between_nodes()
     generator.output_latency_to_file(placement_fname)
     #maximum flow per node
     generator.output_maximum_flows_per_node(placement_fname)
+
     #pair_latency_limit
     generator.output_pair_latency_limit(placement_fname, pair_latency_limit)
-   
+
+    #-------task and mapping information--------#
     #generate mapped tasks from gravity model data
     path_gravity_info = []
     task_monitor_flow_num = [0]
@@ -403,5 +443,11 @@ if __name__ == "__main__":
     generator.generate_one_path_mapped_tasks(path_gravity_info, task_monitor_flow_num, can_assign, task_maps)
     generator.generate_ecmp_paths_mapped_tasks(topo_json_fname, path_gravity_info, task_monitor_flow_num, can_assign, task_maps)
     generator.output_mapped_tasks(placement_fname, task_monitor_flow_num, can_assign, task_maps)
+
+    #a very small positive real number, used for linearization.
+    generator.output_epsilon(placement_fname)
+
+    #a very large positive number, used for linearization
+    generator.output_M(placement_fname)
 
     print 'new_generate_placement_data succeeded\n'
