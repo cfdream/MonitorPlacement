@@ -3,56 +3,43 @@ model placement_max_assigned_pairs_with_latency_constrain.mod;
 data input.dat;
 option solver cplex;
 solve;
-display g
+#number of nodes in the topology
+display n
   >> placement_max_assigned_pairs_with_latency_constrain.output;
-#number of nodes in the topology, number of candidate tasks
-display 2,n,m 
+
+#number of candidate tasks
+display m 
+  >> placement_max_assigned_pairs_with_latency_constrain.output;
+
+#number of candidate pairs of tasks
+display num_match
+  >> placement_max_assigned_pairs_with_latency_constrain.output;
+
+#maximum per pair latency
+display pair_max_latency
   >> placement_max_assigned_pairs_with_latency_constrain.output;
 
 #number of flows each node can monitor(assumption: each node can monitor the same amount of flows)
 display max_node_flows[1]
   >> placement_max_assigned_pairs_with_latency_constrain.output;
 
-#combined object
-#display 2,n,m, num_match/m, sum {k in 1..num_match} sum {i in 1..n} sum {j in 1..n} 
-#		(g[matched_tasks[k,1],i]*g[matched_tasks[k,2],j])
-#  - sum {k in 1..num_match} sum {i in 1..n} sum {j in 1..n} 
-#  		(latency[i,j]*max_node_flows[i]*g[matched_tasks[k,1],i]*g[matched_tasks[k,2],j])
-#  	 / (n*num_match)
+#number of assigned pairs of tasks
+display sum {s in 1..m} sum {t in 1..m} a[s,t] / 2
+  >> placement_max_assigned_pairs_with_latency_constrain.output;
+
+#average latency of all monitored flows
+display (sum {s in 1..m, t in 1..m, i in 1..n, j in 1..n} ( a[s,t] * g[s,i] * g[t,j] * min(task_monitor_flow_num[s], task_monitor_flow_num[t]) * latency[i,j] / 2 ))
+        /
+        (sum {s in 1..m, t in 1..m, i in 1..n, j in 1..n} ( a[s,t] * g[s,i] * g[t,j] * min(task_monitor_flow_num[s], task_monitor_flow_num[t]) / 2 ))
+  >> placement_max_assigned_pairs_with_latency_constrain.output;
+
+#display g
 #  >> placement_max_assigned_pairs_with_latency_constrain.output;
 
-#number of assigned pairs of tasks
-display sum {k in 1..num_match} sum {i in 1..n} sum {j in 1..n} 
-		(g[matched_tasks[k,1],i]*g[matched_tasks[k,2],j])
-  >> placement_max_assigned_pairs_with_latency_constrain.output;
+#total monitored flows num
+#display sum {s in 1..m, t in 1..m, i in 1..n, j in 1..n} ( a[s,t] * g[s,i] * g[t,j] * min(task_monitor_flow_num[s], task_monitor_flow_num[t]) / 2 )
+#  >> placement_max_assigned_pairs_with_latency_constrain.output;
 
-#number of flows monitored
-display sum {k in 1..num_match} sum {i in 1..n} sum {j in 1..n} 
-		(
-        g[matched_tasks[k,1],i]*g[matched_tasks[k,2],j] *
-  		min(task_monitor_flow_num[matched_tasks[k,1]], task_monitor_flow_num[matched_tasks[k,2]])
-        )
-  >> placement_max_assigned_pairs_with_latency_constrain.output;
-
-#latency of all monitored flows
-#1. latency between nodes should be the real latency, rather than #hop
-#2. latency should consider the number of flows monitored by each pair of tasks.
-display (sum {k in 1..num_match} sum {i in 1..n} sum {j in 1..n} 
-  		(
-        g[matched_tasks[k,1],i] * g[matched_tasks[k,2],j] * 
-  		latency[i,j] * 
-  		min(task_monitor_flow_num[matched_tasks[k,1]], task_monitor_flow_num[matched_tasks[k,2]])
-        )) / 
-        (sum {k in 1..num_match} sum {i in 1..n} sum {j in 1..n} 
-        (g[matched_tasks[k,1],i]*g[matched_tasks[k,2],j]*
-  		min(task_monitor_flow_num[matched_tasks[k,1]], task_monitor_flow_num[matched_tasks[k,2]])
-        ))
-  >> placement_max_assigned_pairs_with_latency_constrain.output;
-
-
-display num_match
-  >> placement_max_assigned_pairs_with_latency_constrain.output;
-
-display pair_max_latency
-  >> placement_max_assigned_pairs_with_latency_constrain.output;
-
+#total latency for all flows monitored
+#display sum {s in 1..m, t in 1..m, i in 1..n, j in 1..n} ( a[s,t] * g[s,i] * g[t,j] * min(task_monitor_flow_num[s], task_monitor_flow_num[t]) * latency[i,j] / 2 )
+#  >> placement_max_assigned_pairs_with_latency_constrain.output;

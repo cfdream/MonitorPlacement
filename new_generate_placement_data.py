@@ -22,11 +22,18 @@ class GeneratePlacementData:
     ALPHA = 0.1
     CANDIDATE_NODES_FOR_ONE_TASK = 1
 
-    def __init__(self):
+    def __init__(self, placement_fname, topo_fname, topo_json_fname, gravity_file):
         self.num_nodes = 0
         self.graph = {}     #connection list
         self.latency_graph = []
         self.graph_flow_num = 0
+        self.task_monitor_flow_num = [0]
+        self.can_assign = [[]]
+        self.task_maps = []
+        self.placement_fname = placement_fname
+        self.topo_fname = topo_fname
+        self.topo_json_fname = topo_json_fname
+        self.gravity_file = gravity_file
 
     def read_graph_topo(self, filename):
         file=open(filename, 'r')
@@ -60,12 +67,15 @@ class GeneratePlacementData:
         #print self.graph
         with open('topo.json', 'w') as fp:
             json.dump(self.graph, fp)
-        return self.num_nodes
-
-    def init_graph_other_param(self, times_num_flow):
+        
+        #calculate flow number in the graph, based on the method in CSAMP
         self.graph_flow_num = 1.0 * \
             self.num_nodes / GeneratePlacementData.INTERNET2_SWITCH_NUM \
             * GeneratePlacementData.INTERNET2_FLOW_NUM 
+
+        return self.num_nodes
+
+    def cal_max_flow_per_node(self, times_num_flow):
         GeneratePlacementData.MAX_FLOWS_PER_NODE = int ( 1.0 * self.graph_flow_num / self.num_nodes / self.num_nodes / 2 * times_num_flow);
 
     def get_latency_between_nodes(self):
@@ -144,21 +154,6 @@ class GeneratePlacementData:
         out_file.write(";\n");
         out_file.close()
 
-    def output_alpha(self, out_fname):
-        #####Declaration of parameters
-        #param alpha = 0.1;
-        out_file=open(out_fname, 'a')
-        out_file.write('#####Declaration of parameters\n')
-        out_file.write('#param alpha = {0};\n' .format(GeneratePlacementData.ALPHA))
-        out_file.close()
-
-    #a very small positive real number, used for linearization.
-    def output_epsilon(self, out_fname):
-        out_file=open(out_fname, 'a')
-        out_file.write('#####Declaration of parameters\n')
-        out_file.write('param epsilon = 0.0001;\n')
-        out_file.close()
-
     #a very large positive number, used for linearization
     def output_M(self, out_fname):
         out_file=open(out_fname, 'a')
@@ -177,12 +172,12 @@ class GeneratePlacementData:
         out_file.write(out_str + ';\n')
         out_file.close()
 
-    def output_pair_latency_limit(self, out_fname, pair_latency_limit):
+    def output_pair_latency_limit(self, out_fname):
         ##upper limit of latency between one pair of tasks
         #param pair_max_latency;
         out_file=open(out_fname, 'a')
         out_file.write('#upper limit of latency between one pair of tasks\n')
-        out_str='param pair_max_latency:= {0};\n' .format(pair_latency_limit)
+        out_str='param pair_max_latency:= {0};\n' .format(self.pair_latency_limit)
         out_file.write(out_str)
         out_file.close()
 
@@ -332,7 +327,7 @@ class GeneratePlacementData:
                         #add a map of <condition_task, measure_task>
                         task_maps.append((condition_task_id, measure_task_id))
 
-    def output_mapped_tasks(self, out_fname, task_monitor_flow_num, can_assign, task_maps):        
+    def output_mapped_tasks_to_file(self, out_fname, task_monitor_flow_num, can_assign, task_maps):        
         num_tasks = len(task_monitor_flow_num)-1
         out_file=open(out_fname, 'a')
         #2. output CM tasks
@@ -398,8 +393,52 @@ class GeneratePlacementData:
             out_file.write(out_str+'\n')
         out_file.write(';\n')
         out_file.close()
-
         print 'generate_mapped_tasks: {0} pairs of tasks generated\n' .format(num_mapped_paris)
+
+    def read_topology_data(self):
+        #-------node and topology information-------#
+        #read topology
+        self.read_graph_topo(self.topo_fname)
+        #calculate latency matrix
+        self.get_latency_between_nodes()
+
+    def generate_mapped_tasks(self):
+        #-------task and mapping information--------#
+        #generate mapped tasks from gravity model data
+        random.seed(time.time())
+        
+        expected_task_num = self.num_nodes * 20
+
+        while True:
+            path_gravity_info = []
+            self.read_path_gravity_file(self.gravity_file, path_gravity_info)
+            self.generate_one_path_mapped_tasks(path_gravity_info, self.task_monitor_flow_num, self.can_assign, self.task_maps)
+            self.generate_ecmp_paths_mapped_tasks(self.topo_json_fname, path_gravity_info, self.task_monitor_flow_num, self.can_assign, self.task_maps)
+            
+            num_tasks = len(self.task_monitor_flow_num)-1
+            ratio = 1.0 * num_tasks / expected_task_num
+            print num_tasks, expected_task_num, ratio
+            if ratio < 0.95 or ratio > 1.05:
+                self.task_monitor_flow_num = [0]
+                self.can_assign = [[]]
+                self.task_maps = []
+            else:
+                break
+
+    def calculate_params_basedOn_input(self, times_num_flow, pair_latency_limit):
+        self.pair_latency_limit = pair_latency_limit
+        #calculate maximum flow per node
+        self.cal_max_flow_per_node(times_num_flow)
+
+    def output_all_data_to_file(self):
+        self.output_latency_to_file(self.placement_fname)
+        self.output_maximum_flows_per_node(self.placement_fname)
+        #pair_latency_limit
+        self.output_pair_latency_limit(self.placement_fname)
+        #a very large positive number, used for linearization
+        self.output_M(self.placement_fname)
+        self.output_mapped_tasks_to_file(self.placement_fname, self.task_monitor_flow_num, self.can_assign, self.task_maps)
+
 
 if __name__ == "__main__":
     if len(sys.argv) != 7:
@@ -412,42 +451,10 @@ if __name__ == "__main__":
     times_num_flow = int(sys.argv[5])
     pair_latency_limit = int(sys.argv[6])
 
-    #remove existing output file
     commands.getstatusoutput('rm {0}' .format(placement_fname))
 
-    random.seed(time.time())
-
-    generator = GeneratePlacementData()
-    #alpha
-    generator.output_alpha(placement_fname)
-    #-------node and topology information-------#
-    #read topology and initialize
-    generator.read_graph_topo(topo_fname)
-    generator.init_graph_other_param(times_num_flow)
-    #latency matrix
-    generator.get_latency_between_nodes()
-    generator.output_latency_to_file(placement_fname)
-    #maximum flow per node
-    generator.output_maximum_flows_per_node(placement_fname)
-
-    #pair_latency_limit
-    generator.output_pair_latency_limit(placement_fname, pair_latency_limit)
-
-    #-------task and mapping information--------#
-    #generate mapped tasks from gravity model data
-    path_gravity_info = []
-    task_monitor_flow_num = [0]
-    can_assign = [[]]
-    task_maps = []
-    generator.read_path_gravity_file(gravity_file, path_gravity_info)
-    generator.generate_one_path_mapped_tasks(path_gravity_info, task_monitor_flow_num, can_assign, task_maps)
-    generator.generate_ecmp_paths_mapped_tasks(topo_json_fname, path_gravity_info, task_monitor_flow_num, can_assign, task_maps)
-    generator.output_mapped_tasks(placement_fname, task_monitor_flow_num, can_assign, task_maps)
-
-    #a very small positive real number, used for linearization.
-    generator.output_epsilon(placement_fname)
-
-    #a very large positive number, used for linearization
-    generator.output_M(placement_fname)
-
-    print 'new_generate_placement_data succeeded\n'
+    generator = GeneratePlacementData(placement_fname, topo_fname, topo_json_fname, gravity_file)
+    generator.read_topology_data()
+    generator.generate_mapped_tasks()
+    generator.calculate_params_basedOn_input(times_num_flow, pair_latency_limit)
+    generator.output_all_data_to_file()

@@ -3,6 +3,7 @@ import sys
 import string
 import re
 import time
+from new_generate_placement_data import GeneratePlacementData
 
 def experiment1(topo_weight_fname, topo_weight_json_fname, topo_gravity_fname, input_fname):
     '''
@@ -18,16 +19,6 @@ def experiment1(topo_weight_fname, topo_weight_json_fname, topo_gravity_fname, i
             generate_str = 'python new_generate_placement_data.py {input_fname} {topo_weight_fname} {topo_weight_json_fname} {topo_gravity_fname} {flow_times_each_node} {pair_latency_limit}' .format(input_fname=input_fname, topo_weight_fname=topo_weight_fname, topo_weight_json_fname=topo_weight_json_fname, topo_gravity_fname=topo_gravity_fname, flow_times_each_node=flow_times_each_node, pair_latency_limit=pair_latency_limit)
             ret,output = commands.getstatusoutput(generate_str)
             print 'ret:{0}, {1}' .format(ret, output)
-
-            #run our approach
-            #ampl_str = 'ampl placement_max_conbined_objective.run'
-            #ret,output = commands.getstatusoutput(ampl_str)
-            #print 'ret:{0}, {1}' .format(ret, output)
-
-            #run csamp
-            #ampl_str = 'ampl placement_csamp.run'
-            #ret,output = commands.getstatusoutput(ampl_str)
-            #print 'ret:{0}, {1}' .format(ret, output)
 
             #run placement_max_assigned_pairs_with_latency_constrain.run
             start_ms = 1000*time.time()
@@ -47,24 +38,30 @@ def experiment2(topo_weight_fname, topo_weight_json_fname, topo_gravity_fname, i
     placement_max_assigned_pairs_with_latency_constrain
     '''
     #1) X axis: #task, Y axis: objective value. Given mapping ratio.
+    #different curve: different flow_times_each_node
     mapped_condition_monitor_ratio = 1
-    #TODO: flow_times_each_node should be decided
-    for flow_times_each_node in [1, 2, 4]:
-        #for pair_latency_limit in [50, 100, 150, 200, 250, 300]:
-        for pair_latency_limit in [5000]:
-            for ith_round in range(10):
-                #generate data file
-                generate_str = 'python new_generate_placement_data.py {input_fname} {topo_weight_fname} {topo_weight_json_fname} {topo_gravity_fname} {flow_times_each_node} {pair_latency_limit}' .format(input_fname=input_fname, topo_weight_fname=topo_weight_fname, topo_weight_json_fname=topo_weight_json_fname, topo_gravity_fname=topo_gravity_fname, flow_times_each_node=flow_times_each_node, pair_latency_limit=pair_latency_limit)
-                ret,output = commands.getstatusoutput(generate_str)
-                print 'ret:{0}, {1}' .format(ret, output)
+    for ith_round in range(20):
+        generator = GeneratePlacementData(input_fname, topo_weight_fname, topo_weight_json_fname, topo_gravity_fname)
+        generator.read_topology_data()
+        generator.generate_mapped_tasks()
+        #for each round, generate the same tasks, just change the flow_times_each_node, pair_latency_limit
+        for flow_times_each_node in [1, 4, 16, 32, 10000]:
+            #for topology with 11 nodes
+            for pair_latency_limit in [250, 500, 1000, 2000, 3000, 4000]:
+                #1. generate data file
+                #remove existing output file
+                commands.getstatusoutput('rm {0}' .format(input_fname))
+                generator.calculate_params_basedOn_input(flow_times_each_node, pair_latency_limit)
+                generator.output_all_data_to_file()
+                print 'new_generate_placement_data succeeded\n'
 
-                #run placement_max_assigned_pairs_with_latency_constrain.run
+                #2. run placement_max_assigned_pairs_with_latency_constrain.run
                 start_ms = 1000*time.time()
                 ampl_str = 'ampl placement_max_assigned_pairs_with_latency_constrain.run'
                 ret,output = commands.getstatusoutput(ampl_str)
                 print 'ret:{0}, {1}' .format(ret, output)
                 end_ms = 1000*time.time()
-                print "placement_max_assigned_pairs_with_latency_constrain time:{0}ms" .format(end_ms-start_ms)
+                print "placement_max_assigned_pairs_with_latency_constrain flow_times_each_node:{0}, pair_latency_limit:{1}, time:{2}ms" .format(flow_times_each_node, pair_latency_limit, end_ms-start_ms)
 
 if __name__ == '__main__':
     if len(sys.argv) != 4:
@@ -74,6 +71,5 @@ if __name__ == '__main__':
     topo_weight_json_fname = sys.argv[2]
     topo_gravity_fname = sys.argv[3]
     input_fname = 'input.dat'
-    experiment1(topo_weight_fname, topo_weight_json_fname, topo_gravity_fname, input_fname)
-    #experiment2(topo_weight_fname, topo_weight_json_fname, topo_gravity_fname, input_fname)
-
+    #experiment1(topo_weight_fname, topo_weight_json_fname, topo_gravity_fname, input_fname)
+    experiment2(topo_weight_fname, topo_weight_json_fname, topo_gravity_fname, input_fname)
