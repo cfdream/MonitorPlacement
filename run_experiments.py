@@ -13,22 +13,30 @@ def experiment1(topo_weight_fname, topo_weight_json_fname, topo_gravity_fname, i
     mapped_condition_monitor_ratio = 1
     pair_latency_limit = 999999999
     #for flow_times_each_node in [1, 2, 4, 8, 16, 32, 64, 128]:
-    for flow_times_each_node in [1]:
-        for ith_round in range(1):
-            #generate data file
-            generate_str = 'python new_generate_placement_data.py {input_fname} {topo_weight_fname} {topo_weight_json_fname} {topo_gravity_fname} {flow_times_each_node} {pair_latency_limit}' .format(input_fname=input_fname, topo_weight_fname=topo_weight_fname, topo_weight_json_fname=topo_weight_json_fname, topo_gravity_fname=topo_gravity_fname, flow_times_each_node=flow_times_each_node, pair_latency_limit=pair_latency_limit)
-            ret,output = commands.getstatusoutput(generate_str)
-            print 'ret:{0}, {1}' .format(ret, output)
+    for ith_round in range(20):
+        generator = GeneratePlacementData(input_fname, topo_weight_fname, topo_weight_json_fname, topo_gravity_fname)
+        generator.read_topology_data()
+        generator.generate_mapped_tasks()
+        for flow_times_each_node in [1, 2, 4, 8, 16]:
 
-            #run placement_max_assigned_pairs_with_latency_constrain.run
-            start_ms = 1000*time.time()
-            ampl_str = 'ampl placement_max_assigned_pairs_with_latency_constrain.run'
-            ret,output = commands.getstatusoutput(ampl_str)
-            print 'ret:{0}, {1}' .format(ret, output)
-            end_ms = 1000*time.time()
-            print "placement_max_assigned_pairs_with_latency_constrain time:{0}ms" .format(end_ms-start_ms)
+            #1. run placement_max_assigned_pairs_with_latency_constrain.run with different latency constraint
+            for pair_latency_limit in [1000, 2000, 3000]:
+                #1.1 generate data file
+                #remove existing output file
+                commands.getstatusoutput('rm {0}' .format(input_fname))
+                generator.calculate_params_basedOn_input(flow_times_each_node, pair_latency_limit)
+                generator.output_all_data_to_file()
+                print 'new_generate_placement_data succeeded\n'
+                
+                #1.2 run algorithm
+                start_ms = 1000*time.time()
+                ampl_str = 'ampl placement_max_assigned_pairs_with_latency_constrain.run'
+                ret,output = commands.getstatusoutput(ampl_str)
+                print 'ret:{0}, {1}' .format(ret, output)
+                end_ms = 1000*time.time()
+                print "placement_max_assigned_pairs_with_latency_constrain time:{0}ms" .format(end_ms-start_ms)
 
-            #run greedy algorithm
+            #3. run greedy algorithm
             greedy_str = 'python greedy_algorithm.py input.dat >> greedy_algorithm.output'
             ret,output = commands.getstatusoutput(greedy_str)
             print "greedy_algorithm finished"
