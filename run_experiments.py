@@ -8,6 +8,7 @@ from new_generate_placement_data import GeneratePlacementData
 def experiment1(topo_weight_fname, topo_weight_json_fname, topo_gravity_fname, input_fname):
     '''
     compare optimal algorithm with greddy
+    tradeoff is included here as well
     '''
     #1) X axis: #task, Y axis: objective value. Given mapping ratio.
     mapped_condition_monitor_ratio = 1
@@ -17,14 +18,14 @@ def experiment1(topo_weight_fname, topo_weight_json_fname, topo_gravity_fname, i
         generator = GeneratePlacementData(input_fname, topo_weight_fname, topo_weight_json_fname, topo_gravity_fname)
         generator.read_topology_data()
         generator.generate_mapped_tasks()
-        for flow_times_each_node in [1, 2, 4, 8, 16]:
-
+        #for flow_times_each_node in [1, 2, 4, 8, 16]:
+        for node_capacity in [25000, 50000, 100000, 200000, 400000, 800000, 1600000, 3200000, 9999999999]:
             #1. run placement_max_assigned_pairs_with_latency_constrain.run with different latency constraint
-            for pair_latency_limit in [1000, 2000, 3000]:
+            for pair_latency_limit in [1000, 2000, 1000000]:
                 #1.1 generate data file
                 #remove existing output file
                 commands.getstatusoutput('rm {0}' .format(input_fname))
-                generator.calculate_params_basedOn_input(flow_times_each_node, pair_latency_limit)
+                generator.calculate_params_basedOn_input(node_capacity, pair_latency_limit)
                 generator.output_all_data_to_file()
                 print 'new_generate_placement_data succeeded\n'
                 
@@ -36,7 +37,7 @@ def experiment1(topo_weight_fname, topo_weight_json_fname, topo_gravity_fname, i
                 end_ms = 1000*time.time()
                 print "placement_max_assigned_pairs_with_latency_constrain time:{0}ms" .format(end_ms-start_ms)
 
-            #3. run greedy algorithm
+            #2. run greedy algorithm
             greedy_str = 'python greedy_algorithm.py input.dat >> greedy_algorithm.output'
             ret,output = commands.getstatusoutput(greedy_str)
             print "greedy_algorithm finished"
@@ -79,5 +80,4 @@ if __name__ == '__main__':
     topo_weight_json_fname = sys.argv[2]
     topo_gravity_fname = sys.argv[3]
     input_fname = 'input.dat'
-    #experiment1(topo_weight_fname, topo_weight_json_fname, topo_gravity_fname, input_fname)
-    experiment2(topo_weight_fname, topo_weight_json_fname, topo_gravity_fname, input_fname)
+    experiment1(topo_weight_fname, topo_weight_json_fname, topo_gravity_fname, input_fname)

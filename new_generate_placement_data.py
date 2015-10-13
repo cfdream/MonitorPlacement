@@ -17,7 +17,7 @@ class GeneratePlacementData:
     MAX_FLOWS_PER_NODE = 1
     
     NUM_CM_TASK_RAND_MIN = -30
-    NUM_CM_TASK_RAND_MAX = 5
+    NUM_CM_TASK_RAND_MAX = 8
 
     ALPHA = 0.1
     CANDIDATE_NODES_FOR_ONE_TASK = 1
@@ -75,8 +75,8 @@ class GeneratePlacementData:
 
         return self.num_nodes
 
-    def cal_max_flow_per_node(self, times_num_flow):
-        GeneratePlacementData.MAX_FLOWS_PER_NODE = int ( 1.0 * self.graph_flow_num / self.num_nodes / self.num_nodes / 2 * times_num_flow);
+    def cal_max_flow_per_node(self, node_capacity):
+        GeneratePlacementData.MAX_FLOWS_PER_NODE = node_capacity
 
     def get_latency_between_nodes(self):
         self.latency_graph.append([])
@@ -412,7 +412,7 @@ class GeneratePlacementData:
         while True:
             path_gravity_info = []
             self.read_path_gravity_file(self.gravity_file, path_gravity_info)
-            self.generate_one_path_mapped_tasks(path_gravity_info, self.task_monitor_flow_num, self.can_assign, self.task_maps)
+            #self.generate_one_path_mapped_tasks(path_gravity_info, self.task_monitor_flow_num, self.can_assign, self.task_maps)
             self.generate_ecmp_paths_mapped_tasks(self.topo_json_fname, path_gravity_info, self.task_monitor_flow_num, self.can_assign, self.task_maps)
             
             num_tasks = len(self.task_monitor_flow_num)-1
@@ -425,10 +425,10 @@ class GeneratePlacementData:
             else:
                 break
 
-    def calculate_params_basedOn_input(self, times_num_flow, pair_latency_limit):
+    def calculate_params_basedOn_input(self, node_capacity, pair_latency_limit):
         self.pair_latency_limit = pair_latency_limit
         #calculate maximum flow per node
-        self.cal_max_flow_per_node(times_num_flow)
+        self.cal_max_flow_per_node(node_capacity)
 
     def output_all_data_to_file(self):
         self.output_latency_to_file(self.placement_fname)
