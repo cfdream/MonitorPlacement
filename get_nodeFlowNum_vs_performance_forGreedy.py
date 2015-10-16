@@ -14,7 +14,7 @@ class GetNumTasksVsObjective():
             line = line[1:-2]
             #print(line)
             items = line.split(', ')
-            if len(items) != 8:
+            if len(items) != 9:
                 continue
             num_nodes = int(items[0])
             num_tasks = int(items[1])
@@ -23,11 +23,12 @@ class GetNumTasksVsObjective():
             num_pairs = int(items[4])
             latency = int(items[5])
             flow_avg_latency = int(items[7])
+            max_flow_latency = int(items[8])
 
             if max_node_flows not in node_flow_num_vs_performance:
                 node_flow_num_vs_performance[max_node_flows] = []
             node_flow_num_vs_performance[max_node_flows].append(
-                (num_nodes, num_tasks, num_candidate_pair, num_pairs, latency, flow_avg_latency)
+                (num_nodes, num_tasks, num_candidate_pair, num_pairs, latency, flow_avg_latency, max_flow_latency)
             )
                 
         #statistics results
@@ -37,12 +38,14 @@ class GetNumTasksVsObjective():
             list_num_pairs = []
             list_latency = []
             list_flow_avg_latency = []
+            all_rounds_max_flow_latency = 0
             for one_tuple in tuples:
                 list_num_tasks.append(one_tuple[1])
                 list_num_candidate_pair.append(one_tuple[2])
                 list_num_pairs.append(one_tuple[3])
                 list_latency.append(one_tuple[4])
                 list_flow_avg_latency.append(one_tuple[5])
+                all_rounds_max_flow_latency = max(all_rounds_max_flow_latency, int(one_tuple[6]))
             avg_num_tasks = statistics.mean(list_num_tasks)
             avg_num_candidate_pair = statistics.mean(list_num_candidate_pair)
             avg_num_pairs = statistics.mean(list_num_pairs)
@@ -59,7 +62,7 @@ class GetNumTasksVsObjective():
                 stdv_num_pairs = statistics.stdev(list_num_pairs)
                 stdv_latency = statistics.stdev(list_latency)
                 stdv_flow_avg_latency = statistics.stdev(list_flow_avg_latency)
-            print(max_node_flows, avg_num_tasks, stdv_num_tasks, avg_num_candidate_pair, stdv_num_candidate_pair, avg_num_pairs, stdv_num_pairs, avg_latency, stdv_latency, avg_flow_avg_latency, stdv_flow_avg_latency) 
+            print(max_node_flows, avg_num_tasks, stdv_num_tasks, avg_num_candidate_pair, stdv_num_candidate_pair, avg_num_pairs, stdv_num_pairs, avg_latency, stdv_latency, avg_flow_avg_latency, stdv_flow_avg_latency, all_rounds_max_flow_latency) 
         
 if __name__ == "__main__":
     if len(sys.argv) != 2:

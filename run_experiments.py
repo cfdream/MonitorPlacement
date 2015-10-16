@@ -20,6 +20,7 @@ def experiment1(topo_weight_fname, topo_weight_json_fname, topo_gravity_fname, i
         generator.generate_mapped_tasks()
         #for flow_times_each_node in [1, 2, 4, 8, 16]:
         for node_capacity in [25000, 50000, 100000, 200000, 400000, 800000, 1600000, 3200000, 9999999999]:
+        #for node_capacity in [9999999999]:
             #1. run placement_max_assigned_pairs_with_latency_constrain.run with different latency constraint
             for pair_latency_limit in [1000, 2000, 1000000]:
                 #1.1 generate data file
@@ -27,20 +28,20 @@ def experiment1(topo_weight_fname, topo_weight_json_fname, topo_gravity_fname, i
                 commands.getstatusoutput('rm {0}' .format(input_fname))
                 generator.calculate_params_basedOn_input(node_capacity, pair_latency_limit)
                 generator.output_all_data_to_file()
-                print 'new_generate_placement_data succeeded\n'
+                print('new_generate_placement_data succeeded\n')
                 
                 #1.2 run algorithm
                 start_ms = 1000*time.time()
                 ampl_str = 'ampl placement_max_assigned_pairs_with_latency_constrain.run'
                 ret,output = commands.getstatusoutput(ampl_str)
-                print 'ret:{0}, {1}' .format(ret, output)
+                print('ret:{0}, {1}' .format(ret, output))
                 end_ms = 1000*time.time()
-                print "placement_max_assigned_pairs_with_latency_constrain time:{0}ms" .format(end_ms-start_ms)
+                print("placement_max_assigned_pairs_with_latency_constrain time:{0}ms" .format(end_ms-start_ms))
 
             #2. run greedy algorithm
             greedy_str = 'python greedy_algorithm.py input.dat >> greedy_algorithm.output'
             ret,output = commands.getstatusoutput(greedy_str)
-            print "greedy_algorithm finished"
+            print("greedy_algorithm finished")
 
 def experiment2(topo_weight_fname, topo_weight_json_fname, topo_gravity_fname, input_fname):
     '''
@@ -62,19 +63,19 @@ def experiment2(topo_weight_fname, topo_weight_json_fname, topo_gravity_fname, i
                 commands.getstatusoutput('rm {0}' .format(input_fname))
                 generator.calculate_params_basedOn_input(flow_times_each_node, pair_latency_limit)
                 generator.output_all_data_to_file()
-                print 'new_generate_placement_data succeeded\n'
+                print('new_generate_placement_data succeeded\n')
 
                 #2. run placement_max_assigned_pairs_with_latency_constrain.run
                 start_ms = 1000*time.time()
                 ampl_str = 'ampl placement_max_assigned_pairs_with_latency_constrain.run'
                 ret,output = commands.getstatusoutput(ampl_str)
-                print 'ret:{0}, {1}' .format(ret, output)
+                print('ret:{0}, {1}' .format(ret, output))
                 end_ms = 1000*time.time()
-                print "placement_max_assigned_pairs_with_latency_constrain flow_times_each_node:{0}, pair_latency_limit:{1}, time:{2}ms" .format(flow_times_each_node, pair_latency_limit, end_ms-start_ms)
+                print("placement_max_assigned_pairs_with_latency_constrain flow_times_each_node:{0}, pair_latency_limit:{1}, time:{2}ms" .format(flow_times_each_node, pair_latency_limit, end_ms-start_ms))
 
 if __name__ == '__main__':
     if len(sys.argv) != 4:
-        print 'usage: python run_experiments.py topo_weight_fname topo_weight_json_fname topo_gravity_fname\n'
+        print('usage: python run_experiments.py topo_weight_fname topo_weight_json_fname topo_gravity_fname\n')
         exit(0)
     topo_weight_fname = sys.argv[1]
     topo_weight_json_fname = sys.argv[2]

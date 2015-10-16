@@ -1,10 +1,10 @@
-import commands
+#import commands
 import sys
 import string
 import re
 import time
 import random
-from sets import Set
+#from sets import Set
 from heapq import heappush, heappop
 
 class GreedyAlgorithm:
@@ -226,6 +226,8 @@ class GreedyAlgorithm:
                     #assign the taskid
                     self.node_used_flows[nodeid] += task_flow
                     self.task_assigned_node[taskid] = nodeid
+                    #fix, one task can only be assigned to one node
+                    break
 
     def assign_oneCanBeAssignedTask_to_MatchMappedTask(self, taskid, assigned_map_taskid):
         nodeid_of_assigned_map_taskid = self.task_assigned_node[assigned_map_taskid]
@@ -234,7 +236,7 @@ class GreedyAlgorithm:
         best_nodeid_to_assign = 0
         smallest_latency = 9999999999
         if nodeid_of_assigned_map_taskid <= 0:
-            print "Error, nodeid_of_assigned_map_taskid <= 0"
+            print("Error, nodeid_of_assigned_map_taskid <= 0")
             return
         for nodeid in range(1, self.num_nodes+1):
             if self.task_can_assign[taskid][nodeid]:
@@ -245,6 +247,8 @@ class GreedyAlgorithm:
                     if latency < smallest_latency:
                         smallest_latency = latency
                         best_nodeid_to_assign = nodeid
+                        #fix, one task can only be assigned to one node
+                        break
 
         if best_nodeid_to_assign:
             #assign the taskid
@@ -255,6 +259,7 @@ class GreedyAlgorithm:
         num_assigned_pair = 0
         latency = 0
         monitored_flow_num = 0
+        flow_latency_list = []
         for matchid in range(1, self.num_match+1):
             map_taskid1 = self.match_tasks[matchid][1]
             map_taskid2 = self.match_tasks[matchid][2]
@@ -262,12 +267,15 @@ class GreedyAlgorithm:
             taskid2_node = self.task_assigned_node[map_taskid2]
             #self.task_monitor_flow_num = [0]
             if taskid1_node and taskid2_node:
-                taskid1_monitor_flow = self.task_monitor_flow_num[taskid1_node]
-                taskid2_monitor_flow = self.task_monitor_flow_num[taskid2_node]
+                taskid1_monitor_flow = self.task_monitor_flow_num[map_taskid1]
+                taskid2_monitor_flow = self.task_monitor_flow_num[map_taskid2]
                 num_assigned_pair += 1
                 latency += self.latency[taskid1_node][taskid2_node] * min(taskid1_monitor_flow, taskid2_monitor_flow)
                 monitored_flow_num += min(taskid1_monitor_flow, taskid2_monitor_flow)
+                for i in range(min(taskid1_monitor_flow, taskid2_monitor_flow)):
+                    flow_latency_list.append(self.latency[taskid1_node][taskid2_node])
                 #print "taskid1:", map_taskid1, "node", taskid1_node, "taskid2:", map_taskid2, "node", taskid2_node, "latency", self.latency[taskid1_node][taskid2_node]
+        max_flow_latency = max(flow_latency_list)
 
         #--print monitoring flow number of assigned tasks--
         #assigned_task_monitor_flowNum_list = []
@@ -276,7 +284,7 @@ class GreedyAlgorithm:
         #        assigned_task_monitor_flowNum_list.append(self.task_monitor_flow_num[task_id])
         #for flow_num in sorted(assigned_task_monitor_flowNum_list):
         #    print flow_num
-        return (self.num_nodes, self.num_tasks, self.num_match, self.max_node_flows[1], num_assigned_pair, latency, monitored_flow_num, latency/monitored_flow_num)
+        return (self.num_nodes, self.num_tasks, self.num_match, self.max_node_flows[1], num_assigned_pair, latency, monitored_flow_num, latency/monitored_flow_num, max_flow_latency)
 
 if __name__ == '__main__':
     if len(sys.argv) !=2:
@@ -287,4 +295,4 @@ if __name__ == '__main__':
     greedyAlgorithm.readFromInput(input_fname)
     greedyAlgorithm.initialOtherParam()
     greedyAlgorithm.greedyAlgorithm()
-    print greedyAlgorithm.getAlgorithmResult()
+    print(greedyAlgorithm.getAlgorithmResult())
