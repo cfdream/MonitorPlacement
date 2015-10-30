@@ -35,6 +35,9 @@ var g {1..m, 1..n} binary;
 #whether task i is placed or not
 var a {1..kk} binary;
 
+#latency between selector and monitor pairs, for calculating latency
+var selector_monitor_map_latency {s in 1..m, t in 1..m} = selector_monitor_map[s,t] * (sum{i in 1..n, j in 1..n} (g[s,i]*g[t,j]*latency[i,j]));
+
 ####---------Declaration of objective function---------####
 #objective1: maximize the number of assigned pairs
 maximize max_assigned_tasks: sum {k in 1..kk} a[k];
@@ -49,4 +52,5 @@ subject to node_capacity_limit {i in 1..n} : sum{s in 1..m} g[s,i] * module_moni
 #4. a[kk] <= 1 only when all its modules are assigned
 subject to all_modules_assigned {k in 1..kk}: num_modules_task_has[k] * a[k] <= sum {s in 1..m, i in 1..n} (task_has_module[k,s]*g[s,i]);
 #5. latency constraint: the latency between one assigned pair should <= pair_max_latency
-subject to pair_latency_limit {s in 1..m, t in 1..m, i in 1..n, j in 1..n} : selector_monitor_map[s,t] * latency[i,j] <= pair_max_latency + M * (2-g[s,i]-g[t,j])
+subject to pair_latency_limit {s in 1..m, t in 1..m, i in 1..n, j in 1..n} : selector_monitor_map[s,t] * latency[i,j] <= pair_max_latency + M * (2-g[s,i]-g[t,j]);
+

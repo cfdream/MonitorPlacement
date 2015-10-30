@@ -27,21 +27,37 @@ display max_node_flows[1]
 display sum {k in 1..kk} a[k]
   >> placement_max_task_num_with_latency_constrain.output;
 
-#average latency of all assigned tasks. The latency of one task is the mean latency between all pairs of this task
-#for each task, get its average latency first. then get the sum of all assigned tasks; Finally divide the number of assigned tasks
-             #/ (max(1, a[k] * (sum{s in 1..m, t in 1..m} (task_has_module[k,s] * task_has_module[k,t] * selector_monitor_map[s,t]))))
+#average (avg latency of one task) for all tasks
 display sum {k in 1..kk} (
-             (a[k] * sum{s in 1..m, t in 1..m} (task_has_module[k,s] * task_has_module[k,t] * selector_monitor_map[s,t] * (sum{i in 1..n, j in 1..n} g[s,i] * g[t,j] * latency[i,j])))
+             (a[k] * sum{s in 1..m, t in 1..m} (task_has_module[k,s] * task_has_module[k,t] * selector_monitor_map[s,t] * selector_monitor_map_latency[s,t]))
              / max(1, a[k] * (sum{s in 1..m, t in 1..m} (task_has_module[k,s] * task_has_module[k,t] * selector_monitor_map[s,t])))
          )
         /
         (max(sum {x in 1..kk} a[x], 1))
   >> placement_max_task_num_with_latency_constrain.output;
 
-#average largest latency of each task
-#for each assigned task, get its max latency between all pairs. then get the sum of all assigned tasks; Finally divide the number of assigned tasks
+#average (max latency of one task) for all tasks
 display sum {k in 1..kk} 
-             (a[k] * max{s in 1..m, t in 1..m} (task_has_module[k,s] * task_has_module[k,t] * selector_monitor_map[s,t] * (sum{i in 1..n, j in 1..n} g[s,i] * g[t,j] * latency[i,j])))
+             (a[k] * max{s in 1..m, t in 1..m} (task_has_module[k,s] * task_has_module[k,t] * selector_monitor_map[s,t] * selector_monitor_map_latency[s,t]))
         /
         (max(sum {x in 1..kk} a[x], 1))
   >> placement_max_task_num_with_latency_constrain.output;
+
+##average latency of all assigned tasks. The latency of one task is the mean latency between all pairs of this task
+##for each task, get its average latency first. then get the sum of all assigned tasks; Finally divide the number of assigned tasks
+#             #/ (max(1, a[k] * (sum{s in 1..m, t in 1..m} (task_has_module[k,s] * task_has_module[k,t] * selector_monitor_map[s,t]))))
+#display sum {k in 1..kk} (
+#             (a[k] * sum{s in 1..m, t in 1..m} (task_has_module[k,s] * task_has_module[k,t] * selector_monitor_map[s,t] * (sum{i in 1..n, j in 1..n} g[s,i] * g[t,j] * latency[i,j])))
+#             / max(1, a[k] * (sum{s in 1..m, t in 1..m} (task_has_module[k,s] * task_has_module[k,t] * selector_monitor_map[s,t])))
+#         )
+#        /
+#        (max(sum {x in 1..kk} a[x], 1))
+#  >> placement_max_task_num_with_latency_constrain.output;
+
+##average largest latency of each task
+##for each assigned task, get its max latency between all pairs. then get the sum of all assigned tasks; Finally divide the number of assigned tasks
+#display sum {k in 1..kk} 
+#             (a[k] * max{s in 1..m, t in 1..m} (task_has_module[k,s] * task_has_module[k,t] * selector_monitor_map[s,t] * (sum{i in 1..n, j in 1..n} g[s,i] * g[t,j] * latency[i,j])))
+#        /
+#        (max(sum {x in 1..kk} a[x], 1))
+#  >> placement_max_task_num_with_latency_constrain.output;
