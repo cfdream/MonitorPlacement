@@ -209,7 +209,6 @@ class GeneratePlacementData:
         for ith_path in range(len(path_gravity_info)):
             path_info = path_gravity_info[ith_path]
             #-----for odd path, we generate single path tasks
-            ith_path += 1
             if (ith_path % 2) == 0:
                 continue
 
@@ -242,6 +241,7 @@ class GeneratePlacementData:
                 #-----add the task info
                 task_id = len(self.task_info_list) + 1
                 self.task_info_list.append((task_id, selector_id, monitor_id_list))
+            
         print "single path tasks:", len(self.task_info_list), "modules:", len(self.module_monitor_flow_num)
 
     def generate_multi_paths_tasks(self, path_gravity_info, task_times, one_selector_x_monitors):
