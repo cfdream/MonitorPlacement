@@ -12,7 +12,7 @@ display m
   >> placement_csamp.output;
 
 #number of candidate pairs of tasks
-display num_match
+display kk
   >> placement_csamp.output;
 
 #maximum per pair latency
@@ -23,20 +23,23 @@ display pair_max_latency
 display max_node_flows[1]
   >> placement_csamp.output;
 
-#number of assigned pairs of tasks
-display sum {k in 1..num_match} sum {i in 1..n} sum {j in 1..n} 
-        (g[matched_tasks[k,1],i]*g[matched_tasks[k,2],j])
-          >> placement_csamp.output;
-
-#average latency between all monitored pairs
-display sum {k in 1..num_match} sum {i in 1..n} sum {j in 1..n}
-        (g[matched_tasks[k,1],i]*g[matched_tasks[k,2],j]*latency[i,j])
-        /
-        sum {k in 1..num_match} sum {i in 1..n} sum {j in 1..n}
-        (g[matched_tasks[k,1],i]*g[matched_tasks[k,2],j])
-          >> placement_csamp.output;
-
-#min/max latency of all monitored flows
-display max {k in 1..num_match, i in 1..n, j in 1..n}
-            (g[matched_tasks[k,1],i]*g[matched_tasks[k,2],j]*latency[i,j])
+#number of assigned tasks
+display sum {k in 1..kk} a[k]
   >> placement_csamp.output;
+
+#average (avg latency of one task) for all tasks
+display sum {k in 1..kk} (
+             (a[k] * sum{s in 1..m, t in 1..m} (task_has_module[k,s] * task_has_module[k,t] * selector_monitor_map[s,t] * selector_monitor_map_latency[s,t]))
+             / max(1, a[k] * (sum{s in 1..m, t in 1..m} (task_has_module[k,s] * task_has_module[k,t] * selector_monitor_map[s,t])))
+         )
+        /
+        (max(sum {x in 1..kk} a[x], 1))
+  >> placement_csamp.output;
+
+#average (max latency of one task) for all tasks
+display sum {k in 1..kk} 
+             (a[k] * max{s in 1..m, t in 1..m} (task_has_module[k,s] * task_has_module[k,t] * selector_monitor_map[s,t] * selector_monitor_map_latency[s,t]))
+        /
+        (max(sum {x in 1..kk} a[x], 1))
+  >> placement_csamp.output;
+
