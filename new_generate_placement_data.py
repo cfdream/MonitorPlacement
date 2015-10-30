@@ -27,9 +27,9 @@ class GeneratePlacementData:
         self.graph = {}     #connection list
         self.latency_graph = []
         self.graph_flow_num = 0
-        self.task_monitor_flow_num = [0]
-        self.can_assign = [[]]
-        self.task_maps = []
+        self.module_monitor_flow_num = []
+        self.can_assign = []
+        self.task_info_list = [] #each element (taskid, selector_moduleid, [monitor_moduleid])
         self.placement_fname = placement_fname
         self.topo_fname = topo_fname
         self.topo_json_fname = topo_json_fname
@@ -75,8 +75,6 @@ class GeneratePlacementData:
 
         return self.num_nodes
 
-    def cal_max_flow_per_node(self, node_capacity):
-        GeneratePlacementData.MAX_FLOWS_PER_NODE = node_capacity
 
     def get_latency_between_nodes(self):
         self.latency_graph.append([])
@@ -124,7 +122,7 @@ class GeneratePlacementData:
                         priority_queue.append((neigh_id, min_dist+link_weight))
                 #print "end loop:", priority_queue
 
-    def output_latency_to_file(self, out_fname): 
+    def output_nodes_info_to_file(self, out_fname): 
         #number of nodes
         #param n := 2;
         #n*n matrix, latency between nodes
@@ -162,10 +160,9 @@ class GeneratePlacementData:
         out_file.close()
 
     def output_maximum_flows_per_node(self, out_fname):
-        #maximum number of tasks each node can run
-        #param max_node_tasks := 1 2 2 2;
+        #maximum number of flows each node can run
         out_file=open(out_fname, 'a')
-        out_file.write('#maximum number of tasks each node can run\n')
+        out_file.write('#maximum number of flows each node can run\n')
         out_str='param max_node_flows :=\n'
         for i in range(1, self.num_nodes+1):
             out_str += '{0} {1} \n' .format(i, GeneratePlacementData.MAX_FLOWS_PER_NODE)
@@ -173,10 +170,10 @@ class GeneratePlacementData:
         out_file.close()
 
     def output_pair_latency_limit(self, out_fname):
-        ##upper limit of latency between one pair of tasks
+        ##upper limit of latency between one pair of modules
         #param pair_max_latency;
         out_file=open(out_fname, 'a')
-        out_file.write('#upper limit of latency between one pair of tasks\n')
+        out_file.write('#upper limit of latency between one pair of modules\n')
         out_str='param pair_max_latency:= {0};\n' .format(self.pair_latency_limit)
         out_file.write(out_str)
         out_file.close()
@@ -208,192 +205,198 @@ class GeneratePlacementData:
             path_gravity_info.append({'flowNum': path_flow_num, 'path': path_nodes})
         #print path_gravity_info
     
-    def generate_one_path_mapped_tasks(self, path_gravity_info, task_monitor_flow_num, can_assign, task_maps):
-        num_tasks = len(task_monitor_flow_num) - 1
-        for path_info in path_gravity_info:
+    def generate_one_path_tasks(self, path_gravity_info, task_times, one_selector_x_monitors):
+        for ith_path in range(len(path_gravity_info)):
+            path_info = path_gravity_info[ith_path]
+            #-----for odd path, we generate single path tasks
+            ith_path += 1
+            if (ith_path % 2) == 0:
+                continue
+
             path_flow_num = path_info['flowNum']
             path_nodes = path_info['path']
-            #3. get the number of CM tasks per path
-            num_path_cm_tasks = random.randint(GeneratePlacementData.NUM_CM_TASK_RAND_MIN, GeneratePlacementData.NUM_CM_TASK_RAND_MAX)
-            for i in range(0, num_path_cm_tasks):
-                task1_id = num_tasks + 1
-                task2_id = num_tasks + 2
-                num_tasks += 2
-                #task1_id can be assigned to any nodes along the path
-                #task1_id monitors all flows along the path
-                can_assign.append(path_nodes)
-                task_monitor_flow_num.append(path_flow_num)
-                #task2_id can be assigned to any nodes along the path
-                #task2_id monitors all flows along the path
-                can_assign.append(path_nodes)
-                task_monitor_flow_num.append(path_flow_num)
-                #add a map of tasks
-                task_maps.append((task1_id, task2_id))
+            #-----ignore OD pair whose O and D are the same
+            if path_nodes[0] == path_nodes[len(path_nodes)-1]:
+                continue
+            #print path_nodes
+            #-----one path has task_times tasks
+            for i in range(0, task_times):
+                #-----each task only one selector
+                selector_id = len(self.module_monitor_flow_num) + 1
+                #selector_id monitors all flows along the path
+                self.module_monitor_flow_num.append(path_flow_num)
+                #selector_id can be assigned to any nodes along the path
+                self.can_assign.append(path_nodes)
 
-    def generate_ecmp_paths_mapped_tasks(self, topoJsonFile, path_gravity_info, task_monitor_flow_num, can_assign, task_maps): 
-        """
-        1 conditionTask-N measurementTask mapping
-        where N is the number of ECMP paths
-        use getDisjointPaths() to get disjoint paths between each pair of nodes
-        the flow number per sub path_k is calculated as follows:
-        1/dist_k / sum{1/dist_i}
-        """
-        num_tasks = len(task_monitor_flow_num) - 1
-        G = DiGraph(topoJsonFile)
-        for i in range(1, self.num_nodes+1):
-            for j in range(1, self.num_nodes+1):
-                #print i, j
-                if i == j:
-                    continue
-                paths = algorithmAPI.getDisjointPaths(G, str(i), str(j))
-                #ignore one path (same to generate_one_path_mapped_tasks)
-                if len(paths) <= 1:
-                    continue
-                
-                #1. get now_path_flow_num for the pair of <i, j>
-                #the first path is the shortest path, the same stored for each pair of nodes stored in path_gravity_info
-                shortest_path_nodes = paths[0]['path']
-                #print 'shortest_path_nodes', shortest_path_nodes
-                now_path_flow_num = 0
-                for path_gravity in path_gravity_info:
-                    path_nodes = path_gravity['path']
-                    path_flow_num = path_gravity['flowNum']
-                    if len(path_nodes) != len(shortest_path_nodes):
-                        continue
-                    ii = 0
-                    for node in path_nodes:
-                        #path_nodes is in format of 'x', while shortest_path_nodes is in format of (int)x
-                        if node != int(shortest_path_nodes[ii]):
-                            break
-                        ii+=1
-                    if ii == len(path_nodes):
-                        now_path_flow_num = path_flow_num
-                        break
-                #print i, j, now_path_flow_num
-                if now_path_flow_num == 0:
-                    continue
+                monitor_id_list = []
+                #-----each task has x monitors
+                for ith_monitor in range(one_selector_x_monitors):
+                    #one monitor
+                    monitor_id = len(self.module_monitor_flow_num) + 1
+                    monitor_id_list.append(monitor_id)
+                    #monitor_id monitor all flow along the path
+                    self.module_monitor_flow_num.append(path_flow_num)
+                    #monitor_id can be assigned to any nodes along the path
+                    self.can_assign.append(path_nodes)
 
-                #2. candidate nodes of condition tasks
-                # the intersected nodes of all paths
-                intersect_set = Set(paths[0]['path'])
-                # sum{1/dist_i}
-                sum_cost = 0
-                for path in paths:
-                    now_set = Set(path['path'])
-                    intersect_set = intersect_set.intersection(now_set)
-                    sum_cost += 1.0 / path['cost']
-                ctask_candidate_nodes = list(intersect_set)
-                #print 'ctask candidate nodes:', ctask_candidate_nodes
-                #3. candidate nodes of measurement tasks <disjoint nodes of each subpath>
-                #4. path_flow_num of measurement tasks <ratio of now_path_flow_num of each subpath>
-                mtask_subpaths_info = []
-                for one_path in paths:
-                    #3    
-                    candidate_set = Set(one_path['path'])
-                    one_set = Set(one_path['path'])
-                    for sec_path in paths:
-                        if sec_path == one_path:
+                #-----add the task info
+                task_id = len(self.task_info_list) + 1
+                self.task_info_list.append((task_id, selector_id, monitor_id_list))
+        print "single path tasks:", len(self.task_info_list), "modules:", len(self.module_monitor_flow_num)
+
+    def generate_multi_paths_tasks(self, path_gravity_info, task_times, one_selector_x_monitors):
+        print "num_paths in topology:", len(path_gravity_info)
+        for ith_path in range(len(path_gravity_info)):
+            path_info = path_gravity_info[ith_path]
+            #-----for even path, we generate single path tasks
+            if (ith_path % 2) == 1:
+                continue
+
+            path_flow_num = path_info['flowNum']
+            path_nodes = path_info['path']
+            #-----ignore OD pair whose O and D are the same
+            if path_nodes[0] == path_nodes[len(path_nodes)-1]:
+                continue
+            #print path_nodes
+            #-----this path has task_times tasks
+            for i in range(0, task_times):
+                #-----each task only one selector
+                selector_id = len(self.module_monitor_flow_num) + 1
+                #selector_id monitors all flows along the path
+                self.module_monitor_flow_num.append(path_flow_num)
+                #selector_id can be assigned to any nodes along the path
+                self.can_assign.append(path_nodes)
+
+                #-----each task has x monitors, each on x random other paths
+                monitor_id_list = []
+                other_path_id_list = []
+                for ith_monitor in range(one_selector_x_monitors):
+                    #-----get one other path that does not appear in other_path_id_list
+                    other_path_id = 0
+                    while True:
+                        other_path_id = random.randint(0, len(path_gravity_info)-1)
+                        if other_path_id in other_path_id_list:
                             continue
-                        sec_set = Set(sec_path['path'])
-                        candidate_set = candidate_set.difference(one_set.intersection(sec_set))
-                    
-                    #4
-                    one_path_flow_num_ratio = 1.0 / one_path['cost'] / sum_cost
-                    one_path_flow_num = now_path_flow_num * one_path_flow_num_ratio
-                    mtask_subpaths_info.append({'flowNum': int(one_path_flow_num), 'nodes': list(candidate_set)})
-                if len(mtask_subpaths_info) > 2:
-                    print 'mtask candidate nodes:', mtask_subpaths_info
+                        else:
+                            break
+                    other_path_id_list.append(other_path_id)
+                    #print "two paths:", ith_path, other_path_id
 
-                #5. generate mapped tasks for node <i, j> pair
-                num_path_cm_tasks = random.randint(GeneratePlacementData.NUM_CM_TASK_RAND_MIN, GeneratePlacementData.NUM_CM_TASK_RAND_MAX)
-                num_ecmp_paths = len(mtask_subpaths_info)
-                for ii in range(0, num_path_cm_tasks):
-                    #condition task, which monitors all flows of paths between <i,j>
-                    num_tasks += 1
-                    condition_task_id = num_tasks
-                    can_assign.append([int(x) for x in ctask_candidate_nodes])
-                    task_monitor_flow_num.append(now_path_flow_num)
+                    #-----get the other path info
+                    other_path_info = path_gravity_info[other_path_id]
+                    other_path_flow_number = other_path_info['flowNum']
+                    other_path_nodes = other_path_info['path']
+                    #-----assign one monitor to the path
+                    monitor_id = len(self.module_monitor_flow_num) + 1
+                    monitor_id_list.append(monitor_id)
+                    #monitor_id monitor all flow along the the other path
+                    self.module_monitor_flow_num.append(other_path_flow_number)
+                    #monitor_id can be assigned to any nodes along the other path
+                    self.can_assign.append(other_path_nodes)
 
-                    for sub_path in mtask_subpaths_info:
-                        #measurement task, which monitors the flows of sum path between <i,j>
-                        one_path_flow_num = sub_path['flowNum']
-                        one_path_disjont_nodes = [int(x) for x in sub_path['nodes']]
-                        #print one_path_disjont_nodes
-                        num_tasks += 1
-                        measure_task_id = num_tasks
-                        can_assign.append(one_path_disjont_nodes)
-                        task_monitor_flow_num.append(one_path_flow_num)
+                #-----add the task info
+                task_id = len(self.task_info_list) + 1
+                self.task_info_list.append((task_id, selector_id, monitor_id_list))
+        print "multi path tasks:", len(self.task_info_list), "modules:", len(self.module_monitor_flow_num)
 
-                        #add a map of <condition_task, measure_task>
-                        task_maps.append((condition_task_id, measure_task_id))
-
-    def output_mapped_tasks_to_file(self, out_fname, task_monitor_flow_num, can_assign, task_maps):        
-        num_tasks = len(task_monitor_flow_num)-1
+    def output_tasks_info_to_file(self, out_fname):        
         out_file=open(out_fname, 'a')
-        #2. output CM tasks
-        #####output can_assign matrix
-        #header
-        out_file.write('#number of tasks\n')
-        out_str='param m := {0};\n' .format(num_tasks)
+
+        #-----get number of modules
+        num_modules = len(self.module_monitor_flow_num)
+        print "num_modules:", num_modules
+
+        #-----get candidate_tasks_match
+        selector_monitor_match = [[0 for x in range(num_modules + 1)] for x in range(num_modules+1)]
+        for task_info in self.task_info_list:
+            selector_id = task_info[1]
+            for monitor_id in task_info[2]:
+                #print selector_id, monitor_id
+                selector_monitor_match[selector_id][monitor_id] = 1
+                selector_monitor_match[monitor_id][selector_id] = 1
+
+        #-----output number of modules
+        out_file.write('#number of modules\n')
+        out_str='param m := {0};\n' .format(num_modules)
         out_file.write(out_str)
 
-        out_file.write('#can task i be assigned to task j\n')
+        #-----output module_monitor_flow_num
+        out_str='param module_monitor_flow_num :=\n'
+        for i in range(1, num_modules+1):
+            out_str += '{0} {1} \n' .format(i, self.module_monitor_flow_num[i-1])
+        out_file.write(out_str + ";\n")
+
+        #-----output can_assign
+        out_file.write('#can module i be assigned to node j\n')
         out_file.write('param can_assign :\n')
         out_str = " "
         for i in range(1, self.num_nodes+1):
             out_str += " {0}" .format(i)
         out_file.write(out_str+':=\n')
         #body
-        for i in range(1, num_tasks+1):
+        for i in range(1, num_modules+1):
             out_str = "{0}" .format(i)
             for j in range(1, self.num_nodes+1):
-                if j in can_assign[i]:
+                if j in self.can_assign[i-1]:
                     out_str += " 1"
                 else:
                     out_str += " 0"
             out_file.write(out_str+'\n')
         out_file.write(';\n')
-        print 'generate_tasks-num_tasks:{0}, and can_assign matrix' .format(num_tasks)
+
+        #-----output number of tasks
+        num_tasks = len(self.task_info_list)
+        out_file.write('#number of tasks\n')
+        out_str='param kk := {0};\n' .format(num_tasks)
+        out_file.write(out_str)
         
-        #3 output task_monitor_flow_num
-        out_str='param task_monitor_flow_num :=\n'
+        #-----output num_modules_task_has
+        out_str='param num_modules_task_has :=\n'
         for i in range(1, num_tasks+1):
-            out_str += '{0} {1} \n' .format(i, task_monitor_flow_num[i])
+            #one selector
+            task_num_modules = 1
+            #monitor list
+            task_num_modules += len(task_info[2])
+            out_str += '{0} {1} \n' .format(i, task_num_modules)
         out_file.write(out_str + ";\n")
 
-        #4. mapped tasks
-        num_mapped_paris = len(task_maps)
-        out_file.write('#number of matched tasks\n')
-        out_file.write('param num_match = {0};\n' .format(num_mapped_paris))
-        
-        out_file.write('#num_match * 2 matrix, matched tasks\n')
-        out_file.write('param matched_tasks :\n')
-        out_file.write('  1 2:=\n')
-        for i in range(num_mapped_paris):
-            out_file.write('{0} {1} {2}\n' .format(i+1, task_maps[i][0], task_maps[i][1]))
+        #-----output task_has_module
+        #param task_has_module {1..kk, 1..m};
+        out_file.write('#whether task k has module s\n')
+        out_file.write('param task_has_module :\n')
+        out_str = ''
+        for s in range(1, num_modules+1):
+            out_str += " {0}" .format(s)
+        out_file.write(out_str+':=\n')
+        #body
+        for k in range(1, num_tasks+1):
+            task_info = self.task_info_list[k-1]
+            out_str = "{0}" .format(k)
+            for s in range(1, num_modules+1):
+                if s == task_info[1] or (s in task_info[2]):
+                    out_str += " 1"
+                else:
+                    out_str += " 0"
+            out_file.write(out_str+'\n')
         out_file.write(';\n')
 
-        #5. mapped tasks in another format
-        candidate_tasks_match = [[0 for x in range(num_tasks + 1)] for x in range(num_tasks+1)]
-        for i in range(num_mapped_paris):
-            first_taskid = task_maps[i][0]
-            second_taskid = task_maps[i][1]
-            candidate_tasks_match[first_taskid][second_taskid] = 1
-            candidate_tasks_match[second_taskid][first_taskid] = 1
-        out_file.write('#candidate mapping information of tasks\n')
-        out_file.write('param candidate_tasks_match :\n')
+        #-----output selector_monitor_map
+        out_file.write('#whether module s and t are one selector and monitor of one task individually\n')
+        out_file.write('#if s is a selector and t is a monitor of one task, [s,t] = 1; otherwise [s,t] = 0\n')
+        out_file.write('param selector_monitor_map :\n')
         out_str = " "
-        for i in range(1, num_tasks+1):
+        for i in range(1, num_modules+1):
             out_str += " {0}" .format(i)
         out_file.write(out_str+':=\n')
-        for i in range(1, num_tasks+1):
+        for i in range(1, num_modules+1):
             out_str = "{0}" .format(i)
-            for j in range(1, num_tasks+1):
-                out_str += " {0}" .format(candidate_tasks_match[i][j])
+            for j in range(1, num_modules+1):
+                out_str += " {0}" .format(selector_monitor_match[i][j])
             out_file.write(out_str+'\n')
         out_file.write(';\n')
         out_file.close()
-        print 'generate_mapped_tasks: {0} pairs of tasks generated\n' .format(num_mapped_paris)
+
+        print 'generate_mapped_tasks: {0} tasks, {1} modules\n' .format(num_tasks, num_modules)
 
     def read_topology_data(self):
         #-------node and topology information-------#
@@ -402,59 +405,56 @@ class GeneratePlacementData:
         #calculate latency matrix
         self.get_latency_between_nodes()
 
-    def generate_mapped_tasks(self):
+    def generate_mapped_tasks(self, task_times, one_selector_x_monitors):
         #-------task and mapping information--------#
         #generate mapped tasks from gravity model data
         random.seed(time.time())
         
-        expected_task_num = self.num_nodes * 20
+        path_gravity_info = []
+        self.read_path_gravity_file(self.gravity_file, path_gravity_info)
+        self.generate_one_path_tasks(path_gravity_info, task_times, one_selector_x_monitors)
+        self.generate_multi_paths_tasks(path_gravity_info, task_times, one_selector_x_monitors)
 
-        while True:
-            path_gravity_info = []
-            self.read_path_gravity_file(self.gravity_file, path_gravity_info)
-            #self.generate_one_path_mapped_tasks(path_gravity_info, self.task_monitor_flow_num, self.can_assign, self.task_maps)
-            self.generate_ecmp_paths_mapped_tasks(self.topo_json_fname, path_gravity_info, self.task_monitor_flow_num, self.can_assign, self.task_maps)
-            
-            num_tasks = len(self.task_monitor_flow_num)-1
-            ratio = 1.0 * num_tasks / expected_task_num
-            print num_tasks, expected_task_num, ratio
-            if ratio < 0.95 or ratio > 1.05:
-                self.task_monitor_flow_num = [0]
-                self.can_assign = [[]]
-                self.task_maps = []
-            else:
-                break
-
-    def calculate_params_basedOn_input(self, node_capacity, pair_latency_limit):
+    def assign_varied_variables(self, node_capacity, pair_latency_limit):
+        #maximum flow per node
+        GeneratePlacementData.MAX_FLOWS_PER_NODE = node_capacity
+        #latency constraint
         self.pair_latency_limit = pair_latency_limit
-        #calculate maximum flow per node
-        self.cal_max_flow_per_node(node_capacity)
 
     def output_all_data_to_file(self):
-        self.output_latency_to_file(self.placement_fname)
+        #-----output nodes
+        self.output_nodes_info_to_file(self.placement_fname)
+
+        #-----output varied variables, constant
+        #node capacity
         self.output_maximum_flows_per_node(self.placement_fname)
         #pair_latency_limit
         self.output_pair_latency_limit(self.placement_fname)
         #a very large positive number, used for linearization
         self.output_M(self.placement_fname)
-        self.output_mapped_tasks_to_file(self.placement_fname, self.task_monitor_flow_num, self.can_assign, self.task_maps)
+        
+        #-----output tasks
+        self.output_tasks_info_to_file(self.placement_fname)
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 7:
-        print "usage: python new_generate_placement_data.py placement.dat topo_weight_file topo_weight_json_file gravity_file times_num_flow[1,2,4,8,16] pair_latency_limit\n"
+    if len(sys.argv) != 9:
+        print "usage: python new_generate_placement_data.py placement.dat topo_weight_file topo_weight_json_file gravity_file task_times[times to #OD pairs] pair_latency_limit node_capacity one_selector_x_monitors[1,2,3,...]\n"
         exit(0)
     placement_fname = sys.argv[1]
     topo_fname = sys.argv[2]
     topo_json_fname = sys.argv[3]
     gravity_file = sys.argv[4]
-    times_num_flow = int(sys.argv[5])
+    task_times = int(sys.argv[5])
     pair_latency_limit = int(sys.argv[6])
+    node_capacity = int(sys.argv[7])
+    one_selector_x_monitors = int(sys.argv[8])
+    print "pair_latency_limit:", pair_latency_limit, "task_times:", task_times, "one_selector_x_monitors:", one_selector_x_monitors
 
     commands.getstatusoutput('rm {0}' .format(placement_fname))
 
     generator = GeneratePlacementData(placement_fname, topo_fname, topo_json_fname, gravity_file)
     generator.read_topology_data()
-    generator.generate_mapped_tasks()
-    generator.calculate_params_basedOn_input(times_num_flow, pair_latency_limit)
+    generator.generate_mapped_tasks(task_times, one_selector_x_monitors)
+    generator.assign_varied_variables(node_capacity, pair_latency_limit)
     generator.output_all_data_to_file()

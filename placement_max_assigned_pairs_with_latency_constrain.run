@@ -27,30 +27,13 @@ display max_node_flows[1]
 display sum {s in 1..m} sum {t in 1..m} a[s,t] / 2
   >> placement_max_assigned_pairs_with_latency_constrain.output;
 
-#average latency of all monitored flows
-display 
-        (sum {s in 1..m, t in 1..m} (
-            a[s,t] * min(task_monitor_flow_num[s], task_monitor_flow_num[t]) *
-            (sum{i in 1..n, j in 1..n}
-                g[s,i] * g[t,j] * latency[i,j])))
+#average latency between all monitored pairs
+display (sum {s in 1..m, t in 1..m} 
+            ( a[s,t] * (sum{i in 1..n, j in 1..n} g[s,i] * g[t,j] * latency[i,j])))
         /
-        (sum {s in 1..m, t in 1..m} (
-            a[s,t] * min(task_monitor_flow_num[s], task_monitor_flow_num[t])))
+        (sum {s in 1..m, t in 1..m} a[s,t])
   >> placement_max_assigned_pairs_with_latency_constrain.output;
 
 #min/max latency of all monitored flows
 display max{s in 1..m, t in 1..m, i in 1..n, j in 1..n} (a[s,t]*g[s,i]*g[t,j]*latency[i,j])
   >> placement_max_assigned_pairs_with_latency_constrain.output;
-
-#total monitored flows num
-#display (sum {s in 1..m, t in 1..m} (
-#            a[s,t] * min(task_monitor_flow_num[s], task_monitor_flow_num[t])))
-#  >> placement_max_assigned_pairs_with_latency_constrain.output;
-
-#total latency for all flows monitored
-#display (sum {s in 1..m, t in 1..m} (
-#            a[s,t] * min(task_monitor_flow_num[s], task_monitor_flow_num[t]) *
-#            (sum{i in 1..n, j in 1..n}
-#                g[s,i] * g[t,j] * latency[i,j])))
-#  >> placement_max_assigned_pairs_with_latency_constrain.output;
-
