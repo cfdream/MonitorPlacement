@@ -34,6 +34,10 @@ class GeneratePlacementData:
         self.topo_fname = topo_fname
         self.topo_json_fname = topo_json_fname
         self.gravity_file = gravity_file
+        #generate a set of paths for generate_one_path_tasks
+        self.single_path_task_path_id_list = []
+        #generate another disjoint set of paths for generate_multi_paths_tasks
+        self.multi_path_task_path_id_list = []
 
     def read_graph_topo(self, filename):
         file=open(filename, 'r')
@@ -206,11 +210,9 @@ class GeneratePlacementData:
         #print path_gravity_info
     
     def generate_one_path_tasks(self, path_gravity_info, task_times, one_selector_x_monitors):
-        for ith_path in range(len(path_gravity_info)):
-            path_info = path_gravity_info[ith_path]
-            #-----for odd path, we generate single path tasks
-            if (ith_path % 2) == 0:
-                continue
+        for path_id in sorted(self.single_path_task_path_id_list):
+            #print "singe_path:", path_id
+            path_info = path_gravity_info[path_id]
 
             path_flow_num = path_info['flowNum']
             path_nodes = path_info['path']
@@ -246,11 +248,9 @@ class GeneratePlacementData:
 
     def generate_multi_paths_tasks(self, path_gravity_info, task_times, one_selector_x_monitors):
         print "num_paths in topology:", len(path_gravity_info)
-        for ith_path in range(len(path_gravity_info)):
-            path_info = path_gravity_info[ith_path]
-            #-----for even path, we generate single path tasks
-            if (ith_path % 2) == 1:
-                continue
+        for path_id in self.multi_path_task_path_id_list:
+            #print "multi_path:", path_id
+            path_info = path_gravity_info[path_id]
 
             path_flow_num = path_info['flowNum']
             path_nodes = path_info['path']
@@ -405,13 +405,70 @@ class GeneratePlacementData:
         #calculate latency matrix
         self.get_latency_between_nodes()
 
-    def generate_mapped_tasks(self, task_times, one_selector_x_monitors):
+    def generate_single_path_task_path_set(self, single_path_task_path_num, path_gravity_info): 
+        #generate a set of paths for generate_one_path_tasks
+        #self.single_path_task_path_id_list = []
+
+        path_num = len(path_gravity_info)
+
+        for i in range(single_path_task_path_num):
+            #-----1. get one valid path_id
+            while True:
+                path_id = random.randint(0, path_num-1)
+                if path_id in self.single_path_task_path_id_list:
+                    continue
+                path_info = path_gravity_info[path_id]
+                path_flow_num = path_info['flowNum']
+                path_nodes = path_info['path']
+                #-----ignore OD pair whose O and D are the same
+                if path_nodes[0] == path_nodes[len(path_nodes)-1]:
+                    continue
+                #-----ok: path_id is a new selected path id with different O and D
+                self.single_path_task_path_id_list.append(path_id)
+                break
+        print len(self.single_path_task_path_id_list), " single_path_task_path_id_list:", sorted(self.single_path_task_path_id_list)
+
+    ##
+    # @brief just rest path ids besides single_path_task_path_id_list
+    #
+    # @param multi_path_task_path_num
+    #
+    # @return 
+    def generate_multi_path_task_path_set_method1(self, multi_path_task_path_num, path_gravity_info): 
+        #generate another disjoint set of paths for generate_multi_paths_tasks
+        #self.multi_path_task_path_id_list = []
+        path_num = len(path_gravity_info)
+
+        for path_id in range(path_num):
+            #-----ignore those in single_path_task_path_id_list
+            if path_id in self.single_path_task_path_id_list:
+                continue
+            path_info = path_gravity_info[path_id]
+            path_flow_num = path_info['flowNum']
+            path_nodes = path_info['path']
+            #-----ignore OD pair whose O and D are the same
+            if path_nodes[0] == path_nodes[len(path_nodes)-1]:
+                continue
+            #-----ok: path_id is a new selected path id with different O and D
+            self.multi_path_task_path_id_list.append(path_id)
+            if len(self.multi_path_task_path_id_list) == multi_path_task_path_num:
+                break
+        print len(self.multi_path_task_path_id_list), " multi_path_task_path_id_list:", self.multi_path_task_path_id_list
+
+    def generate_mapped_tasks(self, task_times, one_selector_x_monitors, single_path_task_path_num, multi_path_task_path_num):
         #-------task and mapping information--------#
         #generate mapped tasks from gravity model data
         random.seed(time.time())
         
+        #read gravity info
         path_gravity_info = []
         self.read_path_gravity_file(self.gravity_file, path_gravity_info)
+
+        #generate a set of paths for generate_one_path_tasks
+        self.generate_single_path_task_path_set(single_path_task_path_num, path_gravity_info)
+        #generate another disjoint set of paths for generate_multi_paths_tasks
+        self.generate_multi_path_task_path_set_method1(multi_path_task_path_num, path_gravity_info)
+
         self.generate_one_path_tasks(path_gravity_info, task_times, one_selector_x_monitors)
         self.generate_multi_paths_tasks(path_gravity_info, task_times, one_selector_x_monitors)
 
@@ -455,6 +512,6 @@ if __name__ == "__main__":
 
     generator = GeneratePlacementData(placement_fname, topo_fname, topo_json_fname, gravity_file)
     generator.read_topology_data()
-    generator.generate_mapped_tasks(task_times, one_selector_x_monitors)
+    generator.generate_mapped_tasks(task_times, one_selector_x_monitors, 55, 55)
     generator.assign_varied_variables(node_capacity, pair_latency_limit)
     generator.output_all_data_to_file()
