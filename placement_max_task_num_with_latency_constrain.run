@@ -35,7 +35,7 @@ display sum {k in 1..kk} (
              / max(1, a[k] * (sum{s in 1..m, t in 1..m} (task_has_module[k,s] * task_has_module[k,t] * selector_monitor_map[s,t])))
          )
         /
-        (sum {x in 1..kk} a[x])
+        (max(sum {x in 1..kk} a[x], 1))
   >> placement_max_task_num_with_latency_constrain.output;
 
 #average largest latency of each task
@@ -43,15 +43,5 @@ display sum {k in 1..kk} (
 display sum {k in 1..kk} 
              (a[k] * max{s in 1..m, t in 1..m} (task_has_module[k,s] * task_has_module[k,t] * selector_monitor_map[s,t] * (sum{i in 1..n, j in 1..n} g[s,i] * g[t,j] * latency[i,j])))
         /
-        (sum {x in 1..kk} a[x])
+        (max(sum {x in 1..kk} a[x], 1))
   >> placement_max_task_num_with_latency_constrain.output;
-
-#max latency of all monitored flows
-display (sum {k in 1..kk, s in 1..m, t in 1..m} 
-            ( a[k] * task_has_module[k,s] * task_has_module[k,t] * selector_monitor_map[s,t] * (sum{i in 1..n, j in 1..n} g[s,i] * g[t,j] * latency[i,j])))
-  >> placement_max_task_num_with_latency_constrain.output;
-
-#number of assigned pairs of assigned tasks
-#display (sum {k in 1..kk, s in 1..m, t in 1..m} 
-#             ( a[k] * task_has_module[k,s] * task_has_module[k,t] * selector_monitor_map[s,t] ))
-#  >> placement_max_task_num_with_latency_constrain.output;
